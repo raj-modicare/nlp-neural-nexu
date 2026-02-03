@@ -24,6 +24,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Diagnostic Check
+        run: |
+          echo "Current Directory: $(pwd)"
+          echo "Project Name in package.json:"
+          grep '"name":' package.json
+          echo "Build script in package.json:"
+          grep '"build":' package.json
+          echo "TypeScript version:"
+          npx tsc --version
+      
       - name: Build
         run: npm run build
       
