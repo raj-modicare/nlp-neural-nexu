@@ -104,7 +104,6 @@ const handleSubmit = async () => {
     if (mode.value === 'chat') {
       const userMsg: Message = { role: 'user', content: input.value };
       chatHistory.value.push(userMsg);
-      const currentInput = input.value;
       input.value = '';
 
       const completion = await client.chat.completions.create({
