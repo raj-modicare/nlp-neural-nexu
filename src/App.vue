@@ -217,24 +217,22 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Precision Accuracy Strategy
+  // Patient Accuracy Strategy
   const cleanPrompt = promptText.toLowerCase().replace(/[^\w\s]/g, '');
-  // Joining words for better landmark luck (Red Fort -> redfort)
-  const strictTag = cleanPrompt.replace(/\s+/g, '');
-  const searchTags = `architecture,${strictTag},india`;
+  const searchTags = `architecture,monument,${cleanPrompt.replace(/\s+/g, ',')}`;
   
   generatorPaths = [
-    { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-    { name: 'AI Server (Stable)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&model=turbo` },
-    { name: 'Precision Bridge', url: `https://loremflickr.com/1024/1024/${searchTags}?random=${seed}` },
-    { name: 'Landmark Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${searchTags}?random=${seed}` }
+    { name: 'AI Server (Flux Model)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+    { name: 'AI Server (Turbo Model)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&model=turbo` },
+    { name: 'High-Detail Gallery', url: `https://loremflickr.com/1024/1024/${searchTags}?random=${seed}` },
+    { name: 'Regional Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${searchTags}?random=${seed}` }
   ];
 
   currentAttempt = 0;
   totalPaths = generatorPaths.length;
   tryNextPath();
 
-  // Precision Response Interval: 15s for AI, 6s for fallbacks
+  // Patient Response Interval: 25s for AI, 10s for fallbacks
   const rescueTimer = setInterval(() => {
     if (isImageLoading.value) {
       if (currentAttempt < totalPaths) {
@@ -245,18 +243,18 @@ const handleImageGen = async () => {
     } else {
       clearInterval(rescueTimer);
     }
-  }, currentAttempt <= 2 ? 15000 : 7000);
+  }, currentAttempt <= 2 ? 25000 : 10000);
 
-  // Oracle Hard Timeout
+  // Oracle Final Timeout
   setTimeout(() => {
     if (isImageLoading.value) {
       clearInterval(rescueTimer);
       imageError.value = true;
       isImageLoading.value = false;
       isLoading.value = false;
-      generationStatus.value = 'Precision Timeout: AI servers are overloaded.';
+      generationStatus.value = 'Network Timeout: Servers are currently under high load.';
     }
-  }, 50000);
+  }, 60000);
 };
 
 const tryNextPath = () => {
@@ -499,7 +497,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v9.0 - Precision Art</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v9.1 - Patient Artist</span></h1>
       </div>
       
       <div class="header-actions">
