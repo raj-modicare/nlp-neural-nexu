@@ -59,6 +59,10 @@ const chatHistory = ref<Message[]>([]);
 const input = ref('');
 const isLoading = ref(false);
 
+// Image Generation State
+const generatedImageUrl = ref('');
+const isImageLoading = ref(false);
+
 // Other Modes State
 const textInput = ref('');
 const result = ref('');
@@ -194,14 +198,13 @@ const handleImageUpload = (event: Event) => {
   reader.readAsDataURL(file);
 };
 
-// Image Generation State
-const generatedImageUrl = ref('');
-
+// Image Generation Logic
 const handleImageGen = async () => {
   const promptText = textInput.value || input.value;
   if (!promptText) return;
   
   isLoading.value = true;
+  isImageLoading.value = true;
   generatedImageUrl.value = '';
   
   try {
@@ -209,17 +212,16 @@ const handleImageGen = async () => {
     const encodedPrompt = encodeURIComponent(promptText);
     const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
     
-    // Set URL and clear inputs
-    generatedImageUrl.value = url;
+    // Clear inputs immediately
     input.value = '';
     textInput.value = '';
     
-    // Give it a tiny moment to ensure UI registers the start of loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Set URL - the @load event on the img tag will handle stopping the loader
+    generatedImageUrl.value = url;
   } catch (error) {
     alert("Request failed. Please try a simpler prompt.");
-  } finally {
     isLoading.value = false;
+    isImageLoading.value = false;
   }
 };
 
@@ -241,6 +243,12 @@ const downloadImage = async () => {
     // If fetch fails, open in new tab as fallback
     window.open(generatedImageUrl.value, '_blank');
   }
+};
+
+const handleImageError = () => {
+  isImageLoading.value = false;
+  isLoading.value = false;
+  alert('Failed to load image. Please try again.');
 };
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
@@ -637,14 +645,20 @@ const handleSubmit = async () => {
            </button>
         </div>
 
-        <div v-if="mode === 'image-gen' && (generatedImageUrl || isLoading)" class="art-result animate-fade-in">
+        <div v-if="mode === 'image-gen' && (generatedImageUrl || isImageLoading)" class="art-result animate-fade-in">
           <div class="art-card">
-            <div v-if="isLoading" class="art-loader">
+            <div v-if="isImageLoading" class="art-loader">
                <Loader2 class="icon-spin" :size="48" />
                <p>Painting your vision...</p>
             </div>
-            <img v-show="!isLoading && generatedImageUrl" :src="generatedImageUrl" class="generated-img" />
-            <div v-if="!isLoading && generatedImageUrl" class="art-actions">
+            <img 
+              v-show="!isImageLoading && generatedImageUrl" 
+              :src="generatedImageUrl" 
+              class="generated-img" 
+              @load="isImageLoading = false; isLoading = false"
+              @error="handleImageError"
+            />
+            <div v-if="!isImageLoading && generatedImageUrl" class="art-actions">
               <button @click="downloadImage" class="btn-download">
                 <Download :size="18" /> Download High-Res
               </button>
