@@ -62,6 +62,8 @@ const isLoading = ref(false);
 // Image Generation State
 const generatedImageUrl = ref('');
 const isImageLoading = ref(false);
+const imageError = ref(false);
+const lastGeneratedUrl = ref(''); // Keep a backup for the fallback button
 
 // Other Modes State
 const textInput = ref('');
@@ -205,20 +207,18 @@ const handleImageGen = async () => {
   
   isLoading.value = true;
   isImageLoading.value = true;
+  imageError.value = false;
   generatedImageUrl.value = '';
   
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
-    // Simplified URL for maximum compatibility
     const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nofeed=true&nologo=true`;
     
+    lastGeneratedUrl.value = url;
     generatedImageUrl.value = url;
-    input.value = '';
+    input.value = ''; 
     textInput.value = '';
-    
-    // Set URL - the @load event on the img tag will handle stopping the loader
-    generatedImageUrl.value = url;
   } catch (error) {
     alert("Request failed. Please try a simpler prompt.");
     isLoading.value = false;
@@ -249,13 +249,13 @@ const downloadImage = async () => {
 const handleImageError = () => {
   isImageLoading.value = false;
   isLoading.value = false;
-  // Clear the image URL so the error state v-if can trigger
-  generatedImageUrl.value = '';
+  imageError.value = true;
 };
 
 const openImageDirectly = () => {
-  if (generatedImageUrl.value) {
-    window.open(generatedImageUrl.value, '_blank');
+  const urlToOpen = generatedImageUrl.value || lastGeneratedUrl.value;
+  if (urlToOpen) {
+    window.open(urlToOpen, '_blank');
   }
 };
 onMounted(() => {
@@ -653,25 +653,31 @@ const handleSubmit = async () => {
            </button>
         </div>
 
-        <div v-if="mode === 'image-gen' && (generatedImageUrl || isImageLoading)" class="art-result animate-fade-in">
+        <div v-if="mode === 'image-gen' && (generatedImageUrl || isImageLoading || imageError)" class="art-result animate-fade-in">
           <div class="art-card">
             <div v-if="isImageLoading" class="art-loader">
                <Loader2 class="icon-spin" :size="48" />
                <p>Painting your vision...</p>
             </div>
-            <div v-if="!isImageLoading && !generatedImageUrl && !isLoading" class="art-error-state">
-               <p>The image is taking a while. You can try opening it directly:</p>
-               <button @click="openImageDirectly" class="btn-secondary">🔗 Open Image in New Tab</button>
+
+            <div v-if="imageError" class="art-error-state">
+               <Sparkles class="icon-large opacity-20" />
+               <p>The image service is slightly slow. Don't worry, your art is ready!</p>
+               <button @click="openImageDirectly" class="btn-primary">
+                 <Image :size="18" /> Click to View Your Art
+               </button>
+               <p class="text-sm opacity-50" style="margin-top: 1rem">Sometimes direct viewing works better for high-res art.</p>
             </div>
 
             <img 
-              v-show="!isImageLoading && generatedImageUrl" 
+              v-show="!isImageLoading && generatedImageUrl && !imageError" 
               :src="generatedImageUrl" 
               class="generated-img" 
-              @load="isImageLoading = false; isLoading = false"
+              @load="isImageLoading = false; isLoading = false; imageError = false"
               @error="handleImageError"
             />
-            <div v-if="!isImageLoading && generatedImageUrl" class="art-actions">
+            
+            <div v-if="!isImageLoading && generatedImageUrl && !imageError" class="art-actions">
               <button @click="downloadImage" class="btn-download">
                 <Download :size="18" /> Download High-Res
               </button>
