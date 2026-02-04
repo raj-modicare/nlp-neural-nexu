@@ -267,8 +267,22 @@ const tryFallback = () => {
   imageError.value = false;
   isImageLoading.value = true;
   useFallback.value = true;
+  
+  // Try a completely different server scheme (Server 2)
+  const encodedPrompt = encodeURIComponent(textInput.value || input.value);
+  const seed = Math.floor(Math.random() * 1000000);
+  
+  // This route often works when the primary /p/ route is 502ing
+  generatedImageUrl.value = `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+  generationStatus.value = 'Connecting to Backup AI Server...';
+};
+
+const tryStableBridge = () => {
+  imageError.value = false;
+  isImageLoading.value = true;
+  useFallback.value = true;
   generatedImageUrl.value = fallbackUrl.value;
-  generationStatus.value = 'Switching to Stable High-Speed Bridge...';
+  generationStatus.value = 'Switching to High-Speed Photo Bridge...';
 };
 
 const openImageDirectly = () => {
@@ -644,16 +658,16 @@ const handleSubmit = async () => {
 
             <div v-if="imageError" class="art-error-state">
                <Sparkles class="icon-large opacity-20" />
-               <p>The primary AI server is currently busy or down.</p>
-               <div class="flex-col gap-sm">
-                 <button @click="tryFallback" class="btn-primary" style="margin-bottom: 0.5rem">
-                   ⚡ Try Alternative Stable Bridge
+               <p>The primary AI server is currently facing a 502 Cloudflare error (Maintenance).</p>
+               <div class="art-error-actions">
+                 <button @click="tryFallback" class="btn-primary">
+                   ⚡ Try Backup AI Engine
                  </button>
-                 <button @click="openImageDirectly" class="btn-secondary">
-                   🔗 Open Direct AI Link
+                 <button @click="tryStableBridge" class="btn-secondary">
+                   �️ Use Stable Photo Bridge
                  </button>
                </div>
-               <p class="text-sm opacity-50" style="margin-top: 1rem">Server status: 502 Bad Gateway (Maintenance)</p>
+               <p class="text-xs opacity-50" style="margin-top: 1rem">Your prompt is safe. Try one of the backup servers above.</p>
             </div>
 
             <img 
@@ -1306,7 +1320,15 @@ const handleSubmit = async () => {
 
 .art-error-state p {
   color: #9ca3af;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.art-error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 300px;
 }
 
 .art-actions {
