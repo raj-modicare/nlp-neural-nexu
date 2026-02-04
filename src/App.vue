@@ -217,39 +217,44 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Improved Accuracy Strategy
-  const tags = promptText.toLowerCase().replace(/\s+/g, ',');
-  const searchString = `landmark,architecture,${tags}`;
+  // Oracle Accuracy Strategy
+  const cleanPrompt = promptText.toLowerCase().replace(/[^\w\s]/g, '');
+  const landmarkTags = `monument,heritage,${cleanPrompt.replace(/\s+/g, ',')}`;
   
   generatorPaths = [
     { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Direct)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Photo Bridge (Stable)', url: `https://loremflickr.com/1024/1024/${searchString}?random=${seed}` },
-    { name: 'Proxy Mirror', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${searchString}` }
+    { name: 'Landmark Bridge', url: `https://loremflickr.com/1024/1024/${landmarkTags}?random=${seed}` },
+    { name: 'Regional Mirror', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${landmarkTags}?random=${seed}` }
   ];
 
   currentAttempt = 0;
   totalPaths = generatorPaths.length;
   tryNextPath();
 
-  // Rapid Response: Cycle every 6 seconds
+  // Rapid Response Interval: Cycle every 8s
   const rescueTimer = setInterval(() => {
     if (isImageLoading.value) {
       if (currentAttempt < totalPaths) {
          tryNextPath();
       } else {
          clearInterval(rescueTimer);
-         if (isImageLoading.value) {
-           imageError.value = true;
-           isImageLoading.value = false;
-           isLoading.value = false;
-           generationStatus.value = 'Network busy. Please use the button below.';
-         }
       }
     } else {
       clearInterval(rescueTimer);
     }
-  }, 6000);
+  }, 8000);
+
+  // Oracle Hard Timeout: If nothing works in 45s, force show error screen
+  setTimeout(() => {
+    if (isImageLoading.value) {
+      clearInterval(rescueTimer);
+      imageError.value = true;
+      isImageLoading.value = false;
+      isLoading.value = false;
+      generationStatus.value = 'Oracle Timeout: All servers are currently busy.';
+    }
+  }, 45000);
 };
 
 const tryNextPath = () => {
@@ -492,7 +497,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v7.0 - Rapid Response</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v8.0 - Oracle</span></h1>
       </div>
       
       <div class="header-actions">
@@ -723,6 +728,7 @@ const handleSubmit = async () => {
             <img 
               v-show="!isImageLoading && generatedImageUrl && !imageError" 
               :src="generatedImageUrl" 
+              :key="generatedImageUrl"
               class="generated-img" 
               @load="isImageLoading = false; isLoading = false; imageError = false"
               @error="handleImageError"
