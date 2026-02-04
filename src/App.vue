@@ -207,17 +207,17 @@ const handleImageGen = async () => {
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
-    // Directly setting the URL is more reliable than pre-fetching with new Image()
     const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
     
-    // Artificial delay to show the "Thinking" state
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+    // Set URL and clear inputs
     generatedImageUrl.value = url;
-    input.value = ''; // Clear both inputs
+    input.value = '';
     textInput.value = '';
+    
+    // Give it a tiny moment to ensure UI registers the start of loading
+    await new Promise(resolve => setTimeout(resolve, 1000));
   } catch (error) {
-    alert("Error preparing image request. Please try again.");
+    alert("Request failed. Please try a simpler prompt.");
   } finally {
     isLoading.value = false;
   }
@@ -225,13 +225,22 @@ const handleImageGen = async () => {
 
 const downloadImage = async () => {
   if (!generatedImageUrl.value) return;
-  const response = await fetch(generatedImageUrl.value);
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `neural-nexus-art-${Date.now()}.jpg`;
-  link.click();
+  try {
+    // Improved download with CORS handling
+    const response = await fetch(generatedImageUrl.value);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `neural-nexus-art-${Date.now()}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    // If fetch fails, open in new tab as fallback
+    window.open(generatedImageUrl.value, '_blank');
+  }
 };
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
@@ -292,7 +301,8 @@ const handleDemoSubmit = async () => {
   } else if (mode.value === 'translate') {
     result.value = "[DEMO TRANSLATION]\nThis is a simulated translation of your text. In Live Mode, this would be converted perfectly to English or Hindi!";
   } else if (mode.value === 'image-gen') {
-    generatedImageUrl.value = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1024";
+    // Make AI Artist work even in Demo Mode!
+    await handleImageGen();
   }
 
   if (attachedImage.value && mode.value === 'chat') {
