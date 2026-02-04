@@ -217,16 +217,14 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Reliability Strategy
-  // Use commas for Fallback Search (White House -> white,house,architecture) to ensure results
-  const fallbackTags = `${promptText.toLowerCase().replace(/\s+/g, ',')},architecture`;
-  const strictPrompt = `${promptText}, realistic photo, 8k, highly detailed`;
-
+  // Bulletproof Strategy
+  // If AI fails, we use a Search Engine Mirror to guarantee the correct landmark
+  
   generatorPaths = [
     { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
     { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-    { name: 'Global Photo Bridge', url: `https://loremflickr.com/1024/1024/${fallbackTags}?random=${seed}` },
-    { name: 'Backup Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${fallbackTags}?random=${seed}` }
+    { name: 'Visual Search Mirror', url: `https://tse1.mm.bing.net/th?q=${encodedPrompt}&w=1024&h=1024` },
+    { name: 'Backup Search Mirror', url: `https://tse2.mm.bing.net/th?q=${encodedPrompt} architecture&w=1024&h=1024` }
   ];
 
   currentAttempt = 0;
@@ -498,7 +496,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v13.0 - Reliability Prime</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v14.0 - Bulletproof</span></h1>
       </div>
       
       <div class="header-actions">
