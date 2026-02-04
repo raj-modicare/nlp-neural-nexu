@@ -222,17 +222,19 @@ const handleImageGen = async () => {
   
   if (isLogoRequest) {
     // specialized prompt for text/logos
-    const basePrompt = encodeURIComponent(`${promptText}, minimal, vector line art, black ink on white paper, calligraphy logo`);
+    const basePrompt = encodeURIComponent(`${promptText}, typography design, centered text, minimal vector, black ink on white background`);
     
-    // Determine backup style based on keywords
-    const isSketch = /pen|draw|sketch|hand|writing/i.test(promptText);
-    const backupSuffix = isSketch ? 'sketch drawing black white' : 'logo design';
-    
+    // Name Extraction Strategy: Try to find the name to prioritize it in search
+    // "logo of Rajesh" -> extracting "Rajesh"
+    const nameMatch = promptText.match(/of\s+([a-zA-Z]+)/i) || promptText.match(/name\s+([a-zA-Z]+)/i);
+    const extractedName = nameMatch ? nameMatch[1] : promptText;
+    const backupQuery = `${extractedName} calligraphy logo text`;
+
     generatorPaths = [
       { name: 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-      { name: 'Sketch Engine (Turbo)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-      { name: 'Design Archive (Backup)', url: `https://tse1.mm.bing.net/th?q=${encodeURIComponent(promptText + ' ' + backupSuffix)}&w=1024&h=1024` },
-      { name: 'Sketch Mirror (Backup)', url: `https://tse2.mm.bing.net/th?q=${encodeURIComponent(promptText + ' handwritten')}&w=1024&h=1024` }
+      { name: 'Typography Engine', url: `https://pollinations.ai/p/${encodeURIComponent(promptText + ' text logo')}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+      { name: 'Name Design Archive', url: `https://tse1.mm.bing.net/th?q=${encodeURIComponent(backupQuery)}&w=1024&h=1024` },
+      { name: 'Calligraphy Mirror', url: `https://tse2.mm.bing.net/th?q=${encodeURIComponent(extractedName + ' handwritten signature')}&w=1024&h=1024` }
     ];
   } else {
      // Existing v15.0 logic for Landmarks/Photos
@@ -514,7 +516,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v18.0 - Sketch Master</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v19.0 - Name First</span></h1>
       </div>
       
       <div class="header-actions">
