@@ -379,7 +379,7 @@ const handleSubmit = async () => {
           <label>Input Text</label>
           <textarea 
             v-model="textInput"
-            :placeholder="mode === 'summary' ? 'Paste text to summarize...' : 'Paste text to analyze...'"
+            :placeholder="mode === 'summary' ? 'Paste text to summarize...' : mode === 'sentiment' ? 'Paste text to analyze...' : `Paste text to translate into ${targetLanguage}...`"
             class="textarea-field"
           ></textarea>
         </div>
