@@ -37,7 +37,7 @@ const isDemoMode = ref(true);
 // Models
 const availableModels = [
   { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 (High Intelligence)', icon: '🧠' },
-  { id: 'llama-3.2-11b-vision-preview', name: 'Llama 3.2 Vision (AI Eyes)', icon: '👁️' },
+  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout (Vision)', icon: '👁️' },
   { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 (Ultra Fast)', icon: '⚡' },
   { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Large Context)', icon: '📚' },
   { id: 'gemma2-9b-it', name: 'Gemma 2 (Efficient)', icon: '💎' }
@@ -185,7 +185,7 @@ const handleImageUpload = (event: Event) => {
       attachedImage.value = canvas.toDataURL('image/jpeg', 0.8);
       
       if (mode.value !== 'chat') mode.value = 'chat';
-      selectedModel.value = 'llama-3.2-11b-vision-preview';
+      selectedModel.value = 'meta-llama/llama-4-scout-17b-16e-instruct';
     };
     img.src = e.target?.result as string;
   };
