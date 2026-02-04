@@ -249,7 +249,8 @@ const downloadImage = async () => {
 const handleImageError = () => {
   isImageLoading.value = false;
   isLoading.value = false;
-  // We don't alert anymore, we show the fallback button in the UI
+  // Clear the image URL so the error state v-if can trigger
+  generatedImageUrl.value = '';
 };
 
 const openImageDirectly = () => {
@@ -1256,6 +1257,22 @@ const handleSubmit = async () => {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   font-size: 0.875rem;
+}
+
+.art-error-state {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.art-error-state p {
+  color: #9ca3af;
+  margin-bottom: 1rem;
 }
 
 .art-actions {
