@@ -8,12 +8,13 @@ import {
   Key, 
   Send, 
   Sparkles, 
-  Loader2 
+  Loader2,
+  Languages
 } from 'lucide-vue-next';
 import OpenAI from 'openai';
 
 // Types
-type Mode = 'chat' | 'summary' | 'sentiment';
+type Mode = 'chat' | 'summary' | 'sentiment' | 'translate';
 type Message = { role: 'user' | 'assistant'; content: string };
 
 // State
@@ -83,6 +84,8 @@ const handleDemoSubmit = async () => {
     result.value = positive ? "Positive (Simulated): The text contains optimistic language." : 
                    negative ? "Negative (Simulated): Critical or pessimistic tone detected." : 
                    "Neutral (Simulated): The tone appears balanced.";
+  } else if (mode.value === 'translate') {
+    result.value = "[DEMO TRANSLATION]\nThis is a simulated translation of your text. In Live Mode, this would be converted perfectly to English or Hindi!";
   }
 };
 
@@ -108,7 +111,7 @@ const handleSubmit = async () => {
 
       const completion = await client.chat.completions.create({
         messages: [{ role: 'system', content: "You are a helpful, witty, and intelligent AI assistant." }, ...chatHistory.value],
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
       });
 
       const reply = completion.choices[0].message.content || "No response";
@@ -119,7 +122,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Summarize the following text concisely." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
       });
       result.value = completion.choices[0].message.content || "Could not summarize.";
     } else if (mode.value === 'sentiment') {
@@ -128,9 +131,18 @@ const handleSubmit = async () => {
           { role: 'system', content: "Analyze the sentiment of the following text. Respond with: 'Positive', 'Negative', or 'Neutral', followed by a brief explanation." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
       });
       result.value = completion.choices[0].message.content || "Could not analyze.";
+    } else if (mode.value === 'translate') {
+      const completion = await client.chat.completions.create({
+        messages: [
+          { role: 'system', content: "Translate the following text into English. If it is already in English, translate it into Hindi." },
+          { role: 'user', content: textInput.value }
+        ],
+        model: 'gpt-4o-mini',
+      });
+      result.value = completion.choices[0].message.content || "Could not translate.";
     }
   } catch (error: any) {
     alert("Error: " + error.message);
@@ -218,6 +230,17 @@ const handleSubmit = async () => {
         </div>
         <h3>Sentiment</h3>
         <p>Analyze emotional tone</p>
+      </button>
+
+      <button 
+        @click="mode = 'translate'"
+        :class="['nav-card', { active: mode === 'translate' }]"
+      >
+        <div class="nav-icon-box">
+          <Languages :size="24" />
+        </div>
+        <h3>Translator</h3>
+        <p>English ↔ Hindi</p>
       </button>
     </div>
 
@@ -390,7 +413,7 @@ const handleSubmit = async () => {
 
 @media (min-width: 768px) {
   .nav-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
