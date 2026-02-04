@@ -13,7 +13,8 @@ import {
   Mic,
   MicOff,
   Volume2,
-  Paperclip
+  Paperclip,
+  Image
 } from 'lucide-vue-next';
 import OpenAI from 'openai';
 
@@ -36,6 +37,7 @@ const isDemoMode = ref(true);
 // Models
 const availableModels = [
   { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 (High Intelligence)', icon: '🧠' },
+  { id: 'llama-3.2-11b-vision-preview', name: 'Llama 3.2 Vision (AI Eyes)', icon: '👁️' },
   { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 (Ultra Fast)', icon: '⚡' },
   { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Large Context)', icon: '📚' },
   { id: 'gemma2-9b-it', name: 'Gemma 2 (Efficient)', icon: '💎' }
@@ -138,6 +140,28 @@ const handlePdfUpload = async (event: Event) => {
   
   reader.readAsArrayBuffer(file);
 };
+
+// Image Processing
+const imageInput = ref<HTMLInputElement | null>(null);
+const attachedImage = ref<string | null>(null);
+
+const triggerImageUpload = () => {
+  imageInput.value?.click();
+};
+
+const handleImageUpload = (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file || !file.type.startsWith('image/')) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    attachedImage.value = e.target?.result as string;
+    if (mode.value !== 'chat') mode.value = 'chat';
+    // Switch to vision model automatically if image is attached
+    selectedModel.value = 'llama-3.2-11b-vision-preview';
+  };
+  reader.readAsDataURL(file);
+};
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
   if (storedKey) {
@@ -200,7 +224,7 @@ const handleDemoSubmit = async () => {
 };
 
 const handleSubmit = async () => {
-  if (!input.value && !textInput.value) return;
+  if (!input.value && !textInput.value && !attachedImage.value) return; // Added check for attachedImage
   isLoading.value = true;
   result.value = '';
 
@@ -212,15 +236,34 @@ const handleSubmit = async () => {
 
   try {
     const client = getOpenAIClient();
-    // ... rest of the live logic ...
-    
+    // ... rest of the live logic    // 2. CHAT MODE LOGIC
     if (mode.value === 'chat') {
       const userMsg: Message = { role: 'user', content: input.value };
       chatHistory.value.push(userMsg);
+      
+      const currentInput = input.value;
+      const currentImage = attachedImage.value;
+      
       input.value = '';
+      attachedImage.value = null;
+
+      let messages: any[] = [{ role: 'system', content: "You are a helpful, witty, and intelligent AI assistant." }];
+      
+      if (currentImage) {
+        // Prepare multimodal message for vision
+        messages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: currentInput || "Analyze this image." },
+            { type: 'image_url', image_url: { url: currentImage } }
+          ]
+        });
+      } else {
+        messages = [...messages, ...chatHistory.value];
+      }
 
       const completion = await client.chat.completions.create({
-        messages: [{ role: 'system', content: "You are a helpful, witty, and intelligent AI assistant." }, ...chatHistory.value],
+        messages: messages,
         model: selectedModel.value,
       });
 
@@ -401,6 +444,13 @@ const handleSubmit = async () => {
             accept=".pdf" 
             @change="handlePdfUpload" 
           />
+          <input 
+            type="file" 
+            ref="imageInput" 
+            style="display: none" 
+            accept="image/*" 
+            @change="handleImageUpload" 
+          />
           
           <button 
             @click="triggerFileUpload"
@@ -412,12 +462,25 @@ const handleSubmit = async () => {
           </button>
 
           <button 
+            @click="triggerImageUpload"
+            class="icon-btn"
+            title="Analyze Image"
+          >
+            <Image :size="20" />
+          </button>
+
+          <button 
             @click="startListening('input')" 
             :class="['icon-btn', { 'pulse-red': isListening }]"
             title="Speak instead of typing"
           >
             <component :is="isListening ? MicOff : Mic" :size="20" />
           </button>
+
+          <div v-if="attachedImage" class="image-preview-mini animate-fade-in">
+            <img :src="attachedImage" />
+            <button @click="attachedImage = null" class="close-mini">×</button>
+          </div>
           
           <input 
             v-model="input"
@@ -939,6 +1002,40 @@ const handleSubmit = async () => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.image-preview-mini {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--accent-primary);
+}
+
+.image-preview-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.close-mini {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  font-size: 10px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
 }
 
 .key-actions {
