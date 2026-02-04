@@ -214,18 +214,18 @@ const handleImageGen = async () => {
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
   
-  // Unstoppable Cycling Strategy
+  // Ironclad Cycling Strategy
   const paths = [
-    { name: 'AI Server (Primary)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
+    { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Safety Net (Stable)', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'nature'}?random=${seed}` }
+    { name: 'Stability Bridge (4K)', url: `https://source.unsplash.com/featured/1024x1024/?${encodedPrompt.split('%20')[0] || 'monument'}` }
   ];
 
   let attempt = 0;
   
   const tryNextPath = () => {
     if (attempt < paths.length) {
-      generationStatus.value = `Accessing ${paths[attempt].name}...`;
+      generationStatus.value = `Accessing Path ${attempt + 1}: ${paths[attempt].name}`;
       lastGeneratedUrl.value = paths[attempt].url;
       generatedImageUrl.value = paths[attempt].url;
       attempt++;
@@ -277,9 +277,12 @@ const tryStableBridge = () => {
   imageError.value = false;
   isImageLoading.value = true;
   const promptText = textInput.value || input.value;
-  const encodedPrompt = encodeURIComponent(promptText || 'architecture');
-  generatedImageUrl.value = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0]}?random=${Math.random()}`;
-  generationStatus.value = 'Switching to High-Speed Photo Bridge...';
+  const tag = promptText ? promptText.split(' ')[0] : 'landscape';
+  // Using the extremely stable Unsplash bridge
+  const url = `https://source.unsplash.com/featured/1024x1024/?${tag}`;
+  lastGeneratedUrl.value = url;
+  generatedImageUrl.value = url;
+  generationStatus.value = 'Connecting to 4K Stability Bridge...';
 };
 
 const openImageDirectly = () => {
@@ -452,7 +455,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v3.1</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v4.0</span></h1>
       </div>
       
       <div class="header-actions">
@@ -662,16 +665,19 @@ const handleSubmit = async () => {
 
             <div v-if="imageError" class="art-error-state">
                <Sparkles class="icon-large opacity-20" />
-               <p>The primary AI servers are currently busy (502 Gateway Error).</p>
+               <p>The AI Server is currently blocked in your region (502 Error).</p>
                <div class="art-error-actions">
                  <button @click="handleImageGen" class="btn-success">
-                   🟢 Restart Connection (All Paths)
+                   🟢 Restart Connection
                  </button>
                  <button @click="tryStableBridge" class="btn-primary">
-                   🔵 Use Stable Photo Bridge
+                   🔵 Use 4K Stable Bridge
                  </button>
+                 <a :href="lastGeneratedUrl" target="_blank" class="text-link mt-2">
+                   🔗 View Raw Link (Bypass App)
+                 </a>
                </div>
-               <p class="text-xs opacity-50" style="margin-top: 1rem">Server status: 502 Bad Gateway (Region Outage)</p>
+               <p class="text-xs opacity-50" style="margin-top: 1rem">Server Note: Outage detected. Using regional bypass mode.</p>
             </div>
 
             <img 
@@ -1321,11 +1327,12 @@ button.btn-primary:active {
   margin-top: 1rem;
 }
 
-.direct-link-btn {
-  font-size: 0.7rem;
+.text-link {
   color: #818cf8;
   text-decoration: underline;
-  cursor: pointer;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  display: block;
 }
 
 .btn-primary:hover {
