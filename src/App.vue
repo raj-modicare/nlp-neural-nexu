@@ -222,11 +222,12 @@ const handleImageGen = async () => {
   
   if (isLogoRequest) {
     // specialized prompt for text/logos
-    const logoPrompt = encodeURIComponent(`${promptText}, vector line art, minimal, calligraphy, high contrast, typography design, white background`);
+    const basePrompt = encodeURIComponent(`${promptText}, minimal, vector line art, black ink on white paper, calligraphy logo`);
     generatorPaths = [
-      { name: 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${logoPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-      { name: 'Sketch Engine (Turbo)', url: `https://pollinations.ai/p/${logoPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-      { name: 'Design Retry', url: `https://pollinations.ai/p/${logoPrompt}?width=1024&height=1024&seed=${seed + 1}&model=flux&nologo=true` }
+      { name: 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+      { name: 'Sketch Engine (Turbo)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+      { name: 'Design Archive (Backup)', url: `https://tse1.mm.bing.net/th?q=${encodeURIComponent(promptText + ' logo design')}&w=1024&h=1024` },
+      { name: 'Sketch Mirror (Backup)', url: `https://tse2.mm.bing.net/th?q=${encodeURIComponent(promptText + ' calligraphy')}&w=1024&h=1024` }
     ];
   } else {
      // Existing v15.0 logic for Landmarks/Photos
@@ -508,7 +509,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v16.0 - Type Master</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v17.0 - Universal Artist</span></h1>
       </div>
       
       <div class="header-actions">
