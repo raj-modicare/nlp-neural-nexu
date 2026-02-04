@@ -63,7 +63,8 @@ const isLoading = ref(false);
 const generatedImageUrl = ref('');
 const isImageLoading = ref(false);
 const imageError = ref(false);
-const lastGeneratedUrl = ref(''); // Keep a backup for the fallback button
+const lastGeneratedUrl = ref('');
+const generationStatus = ref('');
 
 // Other Modes State
 const textInput = ref('');
@@ -209,17 +210,19 @@ const handleImageGen = async () => {
   isImageLoading.value = true;
   imageError.value = false;
   generatedImageUrl.value = '';
+  generationStatus.value = 'Contacting AI Art Server...';
   
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
     const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nofeed=true&nologo=true`;
     
+    generationStatus.value = 'Painting your vision (usually 5-10s)...';
     lastGeneratedUrl.value = url;
     generatedImageUrl.value = url;
-    // Don't clear input until the image is actually painting or finished
   } catch (error) {
-    alert("Request failed. Please try a simpler prompt.");
+    generationStatus.value = 'Connection Failed.';
+    imageError.value = true;
     isLoading.value = false;
     isImageLoading.value = false;
   }
@@ -618,8 +621,8 @@ const handleSubmit = async () => {
           <div class="art-card">
             <div v-if="isImageLoading" class="art-loader">
                <Loader2 class="icon-spin" :size="48" />
-               <p>Painting your vision...</p>
-               <span class="text-xs opacity-50">This usually takes 5-10 seconds</span>
+               <p>{{ generationStatus }}</p>
+               <span class="text-xs opacity-50">Please wait, your masterpiece is being crafted</span>
             </div>
 
             <div v-if="imageError" class="art-error-state">
@@ -669,6 +672,7 @@ const handleSubmit = async () => {
           <label>Input Text</label>
           <textarea 
             v-model="textInput"
+            @keydown.ctrl.enter="handleImageGen"
             :placeholder="mode === 'summary' ? 'Paste text to summarize...' : mode === 'sentiment' ? 'Paste text to analyze...' : mode === 'translate' ? `Paste text to translate into ${targetLanguage}...` : 'Describe the image you want to create (e.g. A sunset over the Taj Mahal)...'"
             class="textarea-field"
           ></textarea>
