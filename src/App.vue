@@ -210,10 +210,10 @@ const handleImageGen = async () => {
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
-    // Using the dedicated image endpoint which is more stable
-    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&model=flux&safe=true`;
+    // Simplified URL for maximum compatibility
+    const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nofeed=true&nologo=true`;
     
-    // Clear inputs immediately
+    generatedImageUrl.value = url;
     input.value = '';
     textInput.value = '';
     
@@ -249,7 +249,13 @@ const downloadImage = async () => {
 const handleImageError = () => {
   isImageLoading.value = false;
   isLoading.value = false;
-  alert('Failed to load image. Please try again.');
+  // We don't alert anymore, we show the fallback button in the UI
+};
+
+const openImageDirectly = () => {
+  if (generatedImageUrl.value) {
+    window.open(generatedImageUrl.value, '_blank');
+  }
 };
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
@@ -652,6 +658,11 @@ const handleSubmit = async () => {
                <Loader2 class="icon-spin" :size="48" />
                <p>Painting your vision...</p>
             </div>
+            <div v-if="!isImageLoading && !generatedImageUrl && !isLoading" class="art-error-state">
+               <p>The image is taking a while. You can try opening it directly:</p>
+               <button @click="openImageDirectly" class="btn-secondary">🔗 Open Image in New Tab</button>
+            </div>
+
             <img 
               v-show="!isImageLoading && generatedImageUrl" 
               :src="generatedImageUrl" 
@@ -662,6 +673,9 @@ const handleSubmit = async () => {
             <div v-if="!isImageLoading && generatedImageUrl" class="art-actions">
               <button @click="downloadImage" class="btn-download">
                 <Download :size="18" /> Download High-Res
+              </button>
+              <button @click="openImageDirectly" class="btn-secondary" style="margin-left: 1rem">
+                🔗 View Source
               </button>
             </div>
           </div>
