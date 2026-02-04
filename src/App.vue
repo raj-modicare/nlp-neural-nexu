@@ -198,29 +198,27 @@ const handleImageUpload = (event: Event) => {
 const generatedImageUrl = ref('');
 
 const handleImageGen = async () => {
-  if (!textInput.value) return;
+  const promptText = textInput.value || input.value;
+  if (!promptText) return;
+  
   isLoading.value = true;
   generatedImageUrl.value = '';
   
   try {
-    // Using Pollinations.ai for free, high-quality image generation
     const seed = Math.floor(Math.random() * 1000000);
-    const prompt = encodeURIComponent(textInput.value);
-    const url = `https://pollinations.ai/p/${prompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+    const encodedPrompt = encodeURIComponent(promptText);
+    // Directly setting the URL is more reliable than pre-fetching with new Image()
+    const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
     
-    // We "pre-fetch" the image to show loading state correctly
-    const img = new window.Image();
-    img.onload = () => {
-      generatedImageUrl.value = url;
-      isLoading.value = false;
-    };
-    img.onerror = () => {
-      alert("Image generation timed out or failed. Please try a different prompt.");
-      isLoading.value = false;
-    };
-    img.src = url;
+    // Artificial delay to show the "Thinking" state
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    generatedImageUrl.value = url;
+    input.value = ''; // Clear both inputs
+    textInput.value = '';
   } catch (error) {
-    alert("Error generating image: " + error);
+    alert("Error preparing image request. Please try again.");
+  } finally {
     isLoading.value = false;
   }
 };
@@ -629,10 +627,14 @@ const handleSubmit = async () => {
            </button>
         </div>
 
-        <div v-if="mode === 'image-gen' && generatedImageUrl" class="art-result animate-fade-in">
+        <div v-if="mode === 'image-gen' && (generatedImageUrl || isLoading)" class="art-result animate-fade-in">
           <div class="art-card">
-            <img :src="generatedImageUrl" class="generated-img" />
-            <div class="art-actions">
+            <div v-if="isLoading" class="art-loader">
+               <Loader2 class="icon-spin" :size="48" />
+               <p>Painting your vision...</p>
+            </div>
+            <img v-show="!isLoading && generatedImageUrl" :src="generatedImageUrl" class="generated-img" />
+            <div v-if="!isLoading && generatedImageUrl" class="art-actions">
               <button @click="downloadImage" class="btn-download">
                 <Download :size="18" /> Download High-Res
               </button>
@@ -1197,6 +1199,24 @@ const handleSubmit = async () => {
   display: block;
   max-height: 600px;
   object-fit: contain;
+}
+
+.art-loader {
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  color: #818cf8;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.art-loader p {
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.875rem;
 }
 
 .art-actions {
