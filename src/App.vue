@@ -211,45 +211,42 @@ const handleImageGen = async () => {
   isLoading.value = true;
   isImageLoading.value = true;
   imageError.value = false;
-  useFallback.value = false;
   generatedImageUrl.value = '';
-  generationStatus.value = 'Contacting AI Art Server...';
   
-  try {
-    const seed = Math.floor(Math.random() * 1000000);
-    const encodedPrompt = encodeURIComponent(promptText);
-    
-    // Triple Path Strategy
-    const paths = [
-      `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`,
-      `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}`,
-      `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'art'}`
-    ];
-    
-    lastGeneratedUrl.value = paths[0];
-    fallbackUrl.value = paths[2];
-    
-    let currentPathIdx = 0;
-    generatedImageUrl.value = paths[currentPathIdx];
-    generationStatus.value = `Painting Vision (Path ${currentPathIdx + 1})...`;
+  const seed = Math.floor(Math.random() * 1000000);
+  const encodedPrompt = encodeURIComponent(promptText);
+  
+  // High-redundancy server list
+  const paths = [
+    { name: 'AI Server (Primary)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
+    { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
+    { name: 'Safety Net (Stable)', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'art'}?lock=${seed}` },
+    { name: 'Ultima Bridge', url: `https://source.unsplash.com/featured/1024x1024?${encodedPrompt.split('%20')[0] || 'monument'}` }
+  ];
 
-    // Auto-Cycle paths if they hang
-    const cycleInterval = setInterval(() => {
-      if (isImageLoading.value && currentPathIdx < paths.length - 1) {
-        currentPathIdx++;
-        generatedImageUrl.value = paths[currentPathIdx];
-        generationStatus.value = `Retrying on Path ${currentPathIdx + 1}...`;
-      } else {
-        clearInterval(cycleInterval);
-        if (isImageLoading.value) handleImageError();
-      }
-    }, 8000);
-  } catch (error) {
-    generationStatus.value = 'Connection Failed.';
-    imageError.value = true;
-    isLoading.value = false;
-    isImageLoading.value = false;
-  }
+  let attempt = 0;
+  
+  const tryNextPath = () => {
+    if (attempt < paths.length) {
+      generationStatus.value = `Accessing ${paths[attempt].name}...`;
+      lastGeneratedUrl.value = paths[attempt].url;
+      generatedImageUrl.value = paths[attempt].url;
+      attempt++;
+    } else {
+      handleImageError();
+    }
+  };
+
+  tryNextPath();
+  
+  // Global timeout for each attempt
+  const cycleTimeout = setInterval(() => {
+    if (isImageLoading.value && attempt < paths.length) {
+      tryNextPath();
+    } else {
+      clearInterval(cycleTimeout);
+    }
+  }, 10000);
 };
 
 const downloadImage = async () => {
@@ -273,31 +270,18 @@ const downloadImage = async () => {
 };
 
 const handleImageError = () => {
+  imageError.value = true;
   isImageLoading.value = false;
   isLoading.value = false;
-  imageError.value = true;
-  generationStatus.value = 'Primary server failed. Please try a backup.';
-};
-
-const tryFallback = () => {
-  imageError.value = false;
-  isImageLoading.value = true;
-  useFallback.value = true;
-  
-  // Try a completely different server scheme (Server 2)
-  const encodedPrompt = encodeURIComponent(textInput.value || input.value);
-  const seed = Math.floor(Math.random() * 1000000);
-  
-  // This route often works when the primary /p/ route is 502ing
-  generatedImageUrl.value = `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
-  generationStatus.value = 'Connecting to Backup AI Server...';
+  generationStatus.value = 'All servers are busy. Please try again later.';
 };
 
 const tryStableBridge = () => {
   imageError.value = false;
   isImageLoading.value = true;
-  useFallback.value = true;
-  generatedImageUrl.value = fallbackUrl.value;
+  const promptText = textInput.value || input.value;
+  const encodedPrompt = encodeURIComponent(promptText || 'art');
+  generatedImageUrl.value = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0]}`;
   generationStatus.value = 'Switching to High-Speed Photo Bridge...';
 };
 
@@ -471,7 +455,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v2.7</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v3.0</span></h1>
       </div>
       
       <div class="header-actions">
@@ -681,16 +665,16 @@ const handleSubmit = async () => {
 
             <div v-if="imageError" class="art-error-state">
                <Sparkles class="icon-large opacity-20" />
-               <p>The primary AI server is currently facing a 502 Cloudflare error (Maintenance).</p>
+               <p>The primary AI servers are currently busy (502 Gateway Error).</p>
                <div class="art-error-actions">
-                 <button @click="tryFallback" class="btn-success">
-                   🟢 Try Backup AI Engine
+                 <button @click="handleImageGen" class="btn-success">
+                   🟢 Restart Connection (All Paths)
                  </button>
                  <button @click="tryStableBridge" class="btn-primary">
                    🔵 Use Stable Photo Bridge
                  </button>
                </div>
-               <p class="text-xs opacity-50" style="margin-top: 1rem">Your prompt is safe. Try one of the backup servers above.</p>
+               <p class="text-xs opacity-50" style="margin-top: 1rem">Server status: 502 Bad Gateway (Region Outage)</p>
             </div>
 
             <img 
