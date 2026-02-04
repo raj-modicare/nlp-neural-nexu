@@ -455,7 +455,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus</h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v2.5</span></h1>
       </div>
       
       <div class="header-actions">
@@ -660,11 +660,11 @@ const handleSubmit = async () => {
                <Sparkles class="icon-large opacity-20" />
                <p>The primary AI server is currently facing a 502 Cloudflare error (Maintenance).</p>
                <div class="art-error-actions">
-                 <button @click="tryFallback" class="btn-primary">
-                   ⚡ Try Backup AI Engine
+                 <button @click="tryFallback" class="btn-success">
+                   🟢 Try Backup AI Engine
                  </button>
-                 <button @click="tryStableBridge" class="btn-secondary">
-                   �️ Use Stable Photo Bridge
+                 <button @click="tryStableBridge" class="btn-primary">
+                   🔵 Use Stable Photo Bridge
                  </button>
                </div>
                <p class="text-xs opacity-50" style="margin-top: 1rem">Your prompt is safe. Try one of the backup servers above.</p>
@@ -787,6 +787,18 @@ const handleSubmit = async () => {
   background-clip: text;
   color: transparent;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.version-tag {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  color: #818cf8;
+  vertical-align: middle;
 }
 
 .header-actions {
@@ -1249,6 +1261,31 @@ const handleSubmit = async () => {
   color: #9ca3af;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+button.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-success {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #22c55e;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);
+}
+
+.btn-success:hover {
+  background: #16a34a;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
 }
 
 .btn-secondary:hover {
