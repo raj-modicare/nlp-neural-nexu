@@ -218,7 +218,7 @@ const handleImageGen = async () => {
   const paths = [
     { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Stability Bridge (4K)', url: `https://source.unsplash.com/featured/1024x1024/?${encodedPrompt.split('%20')[0] || 'monument'}` }
+    { name: 'Stability Bridge (4K)', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'monument'}?random=${seed}` }
   ];
 
   let attempt = 0;
@@ -277,12 +277,12 @@ const tryStableBridge = () => {
   imageError.value = false;
   isImageLoading.value = true;
   const promptText = textInput.value || input.value;
-  const tag = promptText ? promptText.split(' ')[0] : 'landscape';
-  // Using the extremely stable Unsplash bridge
-  const url = `https://source.unsplash.com/featured/1024x1024/?${tag}`;
+  const tag = promptText ? promptText.split(' ')[0] : 'monument';
+  // LoremFlickr is extremely stable compared to source.unsplash
+  const url = `https://loremflickr.com/1024/1024/${tag}?random=${Math.random()}`;
   lastGeneratedUrl.value = url;
   generatedImageUrl.value = url;
-  generationStatus.value = 'Connecting to 4K Stability Bridge...';
+  generationStatus.value = 'Connecting to 100% Stable Bridge...';
 };
 
 const openImageDirectly = () => {
@@ -455,7 +455,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v4.0</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v4.1</span></h1>
       </div>
       
       <div class="header-actions">
