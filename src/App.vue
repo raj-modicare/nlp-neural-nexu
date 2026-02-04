@@ -63,9 +63,7 @@ const isLoading = ref(false);
 const generatedImageUrl = ref('');
 const isImageLoading = ref(false);
 const imageError = ref(false);
-const useFallback = ref(false);
 const lastGeneratedUrl = ref('');
-const fallbackUrl = ref('');
 const generationStatus = ref('');
 
 // Other Modes State
@@ -216,12 +214,11 @@ const handleImageGen = async () => {
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
   
-  // High-redundancy server list
+  // Unstoppable Cycling Strategy
   const paths = [
     { name: 'AI Server (Primary)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Safety Net (Stable)', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'art'}?lock=${seed}` },
-    { name: 'Ultima Bridge', url: `https://source.unsplash.com/featured/1024x1024?${encodedPrompt.split('%20')[0] || 'monument'}` }
+    { name: 'Safety Net (Stable)', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'nature'}?random=${seed}` }
   ];
 
   let attempt = 0;
@@ -239,14 +236,14 @@ const handleImageGen = async () => {
 
   tryNextPath();
   
-  // Global timeout for each attempt
+  // High-speed cycling for maximum stability
   const cycleTimeout = setInterval(() => {
     if (isImageLoading.value && attempt < paths.length) {
       tryNextPath();
     } else {
       clearInterval(cycleTimeout);
     }
-  }, 10000);
+  }, 6000);
 };
 
 const downloadImage = async () => {
@@ -280,8 +277,8 @@ const tryStableBridge = () => {
   imageError.value = false;
   isImageLoading.value = true;
   const promptText = textInput.value || input.value;
-  const encodedPrompt = encodeURIComponent(promptText || 'art');
-  generatedImageUrl.value = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0]}`;
+  const encodedPrompt = encodeURIComponent(promptText || 'architecture');
+  generatedImageUrl.value = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0]}?random=${Math.random()}`;
   generationStatus.value = 'Switching to High-Speed Photo Bridge...';
 };
 
@@ -455,7 +452,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v3.0</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v3.1</span></h1>
       </div>
       
       <div class="header-actions">
