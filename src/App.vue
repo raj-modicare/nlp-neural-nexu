@@ -217,14 +217,16 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Bulletproof Strategy
-  // If AI fails, we use a Search Engine Mirror to guarantee the correct landmark
+  // Strict Filter Strategy
+  // We use the '/all' modifier to force LoremFlickr to match EVERY keyword, not just one.
+  // "White House USA" -> "white,house,usa,landmark" -> MUST match all.
+  const strictTags = `${promptText.toLowerCase().replace(/\s+/g, ',')},landmark`;
   
   generatorPaths = [
     { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
     { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-    { name: 'Visual Search Mirror', url: `https://tse1.mm.bing.net/th?q=${encodedPrompt}&w=1024&h=1024` },
-    { name: 'Backup Search Mirror', url: `https://tse2.mm.bing.net/th?q=${encodedPrompt} architecture&w=1024&h=1024` }
+    { name: 'Strict Match Bridge', url: `https://loremflickr.com/1024/1024/${strictTags}/all?random=${seed}` },
+    { name: 'Backup Search Mirror', url: `https://tse1.mm.bing.net/th?q=${encodedPrompt} landmark&w=1024&h=1024` }
   ];
 
   currentAttempt = 0;
@@ -496,7 +498,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v14.0 - Bulletproof</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v15.0 - Strict Filter</span></h1>
       </div>
       
       <div class="header-actions">
