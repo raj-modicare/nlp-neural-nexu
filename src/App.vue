@@ -214,36 +214,45 @@ const handleImageGen = async () => {
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
   
-  // Ironclad Cycling Strategy
+  // Unbreakable Cycling Strategy
   const paths = [
     { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Stability Bridge (4K)', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'monument'}?random=${seed}` }
+    { name: 'High-Res Bridge', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'monument'}?random=${seed}` },
+    { name: 'Final Safety Net', url: `https://picsum.photos/seed/${seed}/1024/1024` }
   ];
 
   let attempt = 0;
   
   const tryNextPath = () => {
     if (attempt < paths.length) {
-      generationStatus.value = `Accessing Path ${attempt + 1}: ${paths[attempt].name}`;
+      generationStatus.value = `Accessing Path ${attempt + 1} of ${paths.length}...`;
       lastGeneratedUrl.value = paths[attempt].url;
       generatedImageUrl.value = paths[attempt].url;
       attempt++;
     } else {
-      handleImageError();
+      // Only show error screen after ALL paths failed
+      imageError.value = true;
+      isImageLoading.value = false;
+      isLoading.value = false;
+      generationStatus.value = 'Connection Timeout. Switching to manual backup.';
     }
   };
 
   tryNextPath();
   
-  // High-speed cycling for maximum stability
-  const cycleTimeout = setInterval(() => {
-    if (isImageLoading.value && attempt < paths.length) {
-      tryNextPath();
+  // Auto-cycle every 8 seconds even if no error event fires
+  const cycleInterval = setInterval(() => {
+    if (isImageLoading.value) {
+       if (attempt < paths.length) {
+         tryNextPath();
+       } else {
+         clearInterval(cycleInterval);
+       }
     } else {
-      clearInterval(cycleTimeout);
+      clearInterval(cycleInterval);
     }
-  }, 6000);
+  }, 8000);
 };
 
 const downloadImage = async () => {
@@ -267,10 +276,9 @@ const downloadImage = async () => {
 };
 
 const handleImageError = () => {
-  imageError.value = true;
-  isImageLoading.value = false;
-  isLoading.value = false;
-  generationStatus.value = 'All servers are busy. Please try again later.';
+  // We no longer crash on error. The interval above will try the next path.
+  // We only log it for debugging and allow the next attempt to proceed.
+  console.warn("Path failed, attempting next if available...");
 };
 
 const tryStableBridge = () => {
@@ -464,7 +472,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v4.2 - Stable</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v5.0 - Unbreakable</span></h1>
       </div>
       
       <div class="header-actions">
