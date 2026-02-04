@@ -35,6 +35,14 @@ const availableModels = [
 ];
 const selectedModel = ref('llama-3.3-70b-versatile');
 
+// Language Translation State
+const targetLanguage = ref('Hindi');
+const indianLanguages = [
+  'Hindi', 'Marathi', 'Bengali', 'Tamil', 'Telugu', 
+  'Kannada', 'Gujarati', 'Punjabi', 'Malayalam', 'Odia', 
+  'Assamese', 'Urdu', 'Sanskrit'
+];
+
 // Chat State
 const chatHistory = ref<Message[]>([]);
 const input = ref('');
@@ -184,7 +192,7 @@ const handleSubmit = async () => {
     } else if (mode.value === 'translate') {
       const completion = await client.chat.completions.create({
         messages: [
-          { role: 'system', content: "Translate the following text into English. If it is already in English, translate it into Hindi." },
+          { role: 'system', content: `You are a professional translator. Translate the following text into ${targetLanguage.value}. Ensure the translation is culturally accurate and maintains the original tone.` },
           { role: 'user', content: textInput.value }
         ],
         model: selectedModel.value,
@@ -298,7 +306,7 @@ const handleSubmit = async () => {
           <Languages :size="24" />
         </div>
         <h3>Translator</h3>
-        <p>English ↔ Hindi</p>
+        <p>Multilingual Indian Support</p>
       </button>
     </div>
 
@@ -351,8 +359,22 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <!-- Text Modes -->
       <div v-else class="text-mode-container">
+        <!-- Language Selector for Translator -->
+        <div v-if="mode === 'translate'" class="language-selector animate-fade-in">
+          <label>Translate to:</label>
+          <div class="lang-grid">
+            <button 
+              v-for="lang in indianLanguages" 
+              :key="lang"
+              @click="targetLanguage = lang"
+              :class="['lang-pill', { active: targetLanguage === lang }]"
+            >
+              {{ lang }}
+            </button>
+          </div>
+        </div>
+
         <div class="input-section">
           <label>Input Text</label>
           <textarea 
@@ -551,6 +573,52 @@ const handleSubmit = async () => {
 }
 
 .m-icon { font-size: 1rem; }
+
+.m-icon { font-size: 1rem; }
+
+/* Language Selector Styles */
+.language-selector {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.language-selector label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lang-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lang-pill {
+  padding: 0.4rem 1rem;
+  background: rgba(17, 24, 39, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.lang-pill:hover {
+  background: rgba(31, 41, 55, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.lang-pill.active {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: #6366f1;
+  color: white;
+}
 
 .nav-card:hover {
   background: rgba(31, 41, 55, 0.6);
