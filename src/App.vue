@@ -217,15 +217,15 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Oracle Accuracy Strategy
+  // Ultra-Accuracy Strategy
   const cleanPrompt = promptText.toLowerCase().replace(/[^\w\s]/g, '');
-  const landmarkTags = `monument,heritage,${cleanPrompt.replace(/\s+/g, ',')}`;
+  const searchTags = `architecture,monument,${cleanPrompt.replace(/\s+/g, ',')}`;
   
   generatorPaths = [
-    { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
-    { name: 'AI Server (Direct)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Landmark Bridge', url: `https://loremflickr.com/1024/1024/${landmarkTags}?random=${seed}` },
-    { name: 'Regional Mirror', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${landmarkTags}?random=${seed}` }
+    { name: 'AI Server (Flux Model)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+    { name: 'AI Server (Turbo Model)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&model=turbo` },
+    { name: 'LANDMARK BRIDGE (HQ)', url: `https://loremflickr.com/1024/1024/${searchTags}?random=${seed}` },
+    { name: 'Regional Proxy Mirror', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${searchTags}?random=${seed}` }
   ];
 
   currentAttempt = 0;
@@ -497,7 +497,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v8.0 - Oracle</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v8.1 - High Detail</span></h1>
       </div>
       
       <div class="header-actions">
