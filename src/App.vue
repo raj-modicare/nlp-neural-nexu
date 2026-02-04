@@ -214,12 +214,13 @@ const handleImageGen = async () => {
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
   
-  // Unbreakable Cycling Strategy
+  // Unstoppable Cycling Strategy
+  const tag = promptText.replace(/\s+/g, ','); // Best for image search tags
   const paths = [
     { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'High-Res Bridge', url: `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'monument'}?random=${seed}` },
-    { name: 'Final Safety Net', url: `https://picsum.photos/seed/${seed}/1024/1024` }
+    { name: 'Photo Bridge', url: `https://loremflickr.com/1024/1024/${tag}?random=${seed}` },
+    { name: 'Global Gallery', url: `https://source.unsplash.com/featured/1024x1024/?${encodedPrompt.replace(/%20/g, ',')}` }
   ];
 
   let attempt = 0;
@@ -241,7 +242,7 @@ const handleImageGen = async () => {
 
   tryNextPath();
   
-  // Auto-cycle every 8 seconds even if no error event fires
+  // Auto-cycle: Give AI 12 seconds per attempt, then 6 seconds for fallbacks
   const cycleInterval = setInterval(() => {
     if (isImageLoading.value) {
        if (attempt < paths.length) {
@@ -252,7 +253,7 @@ const handleImageGen = async () => {
     } else {
       clearInterval(cycleInterval);
     }
-  }, 8000);
+  }, attempt <= 2 ? 12000 : 6000);
 };
 
 const downloadImage = async () => {
@@ -472,7 +473,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v5.0 - Unbreakable</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v5.1 - High Accuracy</span></h1>
       </div>
       
       <div class="header-actions">
