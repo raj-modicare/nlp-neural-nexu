@@ -217,29 +217,40 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Full phrase tags for better accuracy (Red Fort India -> Red-Fort-India)
-  const accuracyTags = promptText.replace(/\s+/g, '-').toLowerCase();
+  // Better tag formatting for Accuracy Bridges (Red Fort India -> red,fort,india)
+  const accuracyTags = promptText.toLowerCase().replace(/\s+/g, ',');
   
   generatorPaths = [
-    { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
-    { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Accuracy Bridge', url: `https://loremflickr.com/1024/1024/${accuracyTags}?random=${seed}` },
-    { name: 'Regional Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${accuracyTags}` }
+    { name: 'Primary AI Server', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
+    { name: 'AI Backup Route', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
+    { name: 'Landmark Bridge', url: `https://loremflickr.com/1024/1024/${accuracyTags}?random=${seed}` },
+    { name: 'Archive Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${accuracyTags}` }
   ];
 
   currentAttempt = 0;
   totalPaths = generatorPaths.length;
   tryNextPath();
 
-  // Rescue Interval: If image hangs (no load/error event), jump to next after 15s
+  // Infinite Rescue: Keep ticking until isImageLoading is false
   const rescueTimer = setInterval(() => {
-    if (isImageLoading.value && currentAttempt < totalPaths) {
-      console.log("Image hung, rescue timer triggered...");
-      tryNextPath();
+    if (isImageLoading.value) {
+      console.log("Image rescue heartbeat...");
+      if (currentAttempt < totalPaths) {
+         tryNextPath();
+      } else {
+         // Final safety catch
+         clearInterval(rescueTimer);
+         if (isImageLoading.value) {
+           imageError.value = true;
+           isImageLoading.value = false;
+           isLoading.value = false;
+           generationStatus.value = 'Network busy. Use direct link below.';
+         }
+      }
     } else {
       clearInterval(rescueTimer);
     }
-  }, 15000);
+  }, 12000);
 };
 
 const tryNextPath = () => {
@@ -484,7 +495,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v5.2 - Self Correcting</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v6.0 - Total Control</span></h1>
       </div>
       
       <div class="header-actions">
