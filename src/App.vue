@@ -12,9 +12,16 @@ import {
   Languages,
   Mic,
   MicOff,
-  Volume2
+  Volume2,
+  Paperclip
 } from 'lucide-vue-next';
 import OpenAI from 'openai';
+
+// Access PDF.js from global scope (CDN)
+const pdfjsLib = (window as any).pdfjsLib;
+if (pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 // Types
 type Mode = 'chat' | 'summary' | 'sentiment' | 'translate';
@@ -82,6 +89,48 @@ const startListening = (target: 'input' | 'textInput') => {
 const speak = (text: string) => {
   const utterance = new SpeechSynthesisUtterance(text);
   window.speechSynthesis.speak(utterance);
+};
+
+// PDF Processing
+const fileInput = ref<HTMLInputElement | null>(null);
+const isExtracting = ref(false);
+
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+const handlePdfUpload = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file || file.type !== 'application/pdf') return;
+
+  isExtracting.value = true;
+  const reader = new FileReader();
+  
+  reader.onload = async () => {
+    try {
+      const typedarray = new Uint8Array(reader.result as ArrayBuffer);
+      const pdf = await pdfjsLib.getDocument(typedarray).promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+
+      // Add as a special message or paste to input
+      input.value = `[Document: ${file.name}]\n\nAttached Content:\n${fullText.slice(0, 2000)}${fullText.length > 2000 ? '...' : ''}\n\n(I have extracted the content from your PDF. How can I help you with this?)`;
+      
+      if (mode.value !== 'chat') mode.value = 'chat';
+    } catch (error) {
+      alert("Error reading PDF: " + error);
+    } finally {
+      isExtracting.value = false;
+    }
+  };
+  
+  reader.readAsArrayBuffer(file);
 };
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
@@ -339,6 +388,23 @@ const handleSubmit = async () => {
         </div>
         
         <div class="chat-input-area">
+          <input 
+            type="file" 
+            ref="fileInput" 
+            style="display: none" 
+            accept=".pdf" 
+            @change="handlePdfUpload" 
+          />
+          
+          <button 
+            @click="triggerFileUpload"
+            class="icon-btn"
+            title="Upload PDF"
+            :disabled="isExtracting"
+          >
+            <component :is="isExtracting ? Loader2 : Paperclip" :class="[{ 'icon-spin': isExtracting }]" :size="20" />
+          </button>
+
           <button 
             @click="startListening('input')" 
             :class="['icon-btn', { 'pulse-red': isListening }]"
