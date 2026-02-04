@@ -229,6 +229,13 @@ const handleImageGen = async () => {
     lastGeneratedUrl.value = url;
     fallbackUrl.value = photoUrl;
     generatedImageUrl.value = url;
+
+    // Safety Timeout: If image doesn't load in 15s, show backup options
+    setTimeout(() => {
+      if (isImageLoading.value && generatedImageUrl.value === url) {
+        handleImageError();
+      }
+    }, 15000);
   } catch (error) {
     generationStatus.value = 'Connection Failed.';
     imageError.value = true;
@@ -261,6 +268,7 @@ const handleImageError = () => {
   isImageLoading.value = false;
   isLoading.value = false;
   imageError.value = true;
+  generationStatus.value = 'Primary server failed. Please try a backup.';
 };
 
 const tryFallback = () => {
@@ -455,7 +463,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v2.5</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v2.6</span></h1>
       </div>
       
       <div class="header-actions">
@@ -653,7 +661,9 @@ const handleSubmit = async () => {
             <div v-if="isImageLoading" class="art-loader">
                <Loader2 class="icon-spin" :size="48" />
                <p>{{ generationStatus }}</p>
-               <span class="text-xs opacity-50">Please wait, your masterpiece is being crafted</span>
+               <button @click="handleImageError" class="btn-secondary-sm" style="margin-top: 1rem">
+                 Stop & Try Backup
+               </button>
             </div>
 
             <div v-if="imageError" class="art-error-state">
@@ -1292,6 +1302,26 @@ button.btn-primary:active {
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary-sm {
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.btn-secondary-sm:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
 .animate-fade-in-delayed-1 {
