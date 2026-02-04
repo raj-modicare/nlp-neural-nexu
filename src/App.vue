@@ -217,16 +217,16 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Twin-Turbo Strategy
-  // Removing spaces completely often helps finding exact brand/landmark names
-  const smartTag = promptText.toLowerCase().replace(/\s+/g, '');
-  const strictPrompt = `${promptText} architectural photo, highly detailed, daylight`;
+  // Reliability Strategy
+  // Use commas for Fallback Search (White House -> white,house,architecture) to ensure results
+  const fallbackTags = `${promptText.toLowerCase().replace(/\s+/g, ',')},architecture`;
+  const strictPrompt = `${promptText}, realistic photo, 8k, highly detailed`;
 
   generatorPaths = [
-    { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodeURIComponent(strictPrompt)}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-    { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodeURIComponent(strictPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-    { name: 'Smart Context Bridge', url: `https://loremflickr.com/1024/1024/${smartTag}?random=${seed}` },
-    { name: 'Regional Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${smartTag}?random=${seed}` }
+    { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+    { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+    { name: 'Global Photo Bridge', url: `https://loremflickr.com/1024/1024/${fallbackTags}?random=${seed}` },
+    { name: 'Backup Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${fallbackTags}?random=${seed}` }
   ];
 
   currentAttempt = 0;
@@ -498,7 +498,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v12.0 - Twin Turbo</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v13.0 - Reliability Prime</span></h1>
       </div>
       
       <div class="header-actions">
