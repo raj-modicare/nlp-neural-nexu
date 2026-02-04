@@ -226,17 +226,22 @@ const handleImageGen = async () => {
     
     // Name Extraction
     const nameMatch = promptText.match(/of\s+([a-zA-Z]+)/i) || promptText.match(/name\s+([a-zA-Z]+)/i) || promptText.match(/signature\s+([a-zA-Z]+)/i);
-    const extractedName = nameMatch ? nameMatch[1] : promptText;
+    const extractedName = nameMatch ? nameMatch[1] : promptText.split(' ')[0]; // Default to first word if no match
+    
+    // strict prompt to force exact text
+    const strictTextPrompt = encodeURIComponent(`text "${extractedName}" written in handwritten signature style, black ink on white background, minimal, single word only, no extra text`);
     
     // Signature vs Logo Logic
     const isSignature = /signature/i.test(promptText);
+    // For backups, we try to be specific, but search engines are hard to control.
+    // We prioritize the AI here because AI follows instructions better.
     const backupQuery = isSignature 
-      ? `${extractedName} handwritten signature white background` 
+      ? `${extractedName} handwritten signature isolated` 
       : `${extractedName} calligraphy logo text`;
 
     generatorPaths = [
-      { name: isSignature ? 'Signature Artist' : 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-      { name: 'Typography Engine', url: `https://pollinations.ai/p/${encodeURIComponent(promptText + ' text logo')}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+      { name: isSignature ? 'Signature AI (Flux)' : 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${strictTextPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+      { name: 'Typography Engine', url: `https://pollinations.ai/p/${strictTextPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
       { name: 'Design Archive', url: `https://tse1.mm.bing.net/th?q=${encodeURIComponent(backupQuery)}&w=1024&h=1024` },
       { name: 'Calligraphy Mirror', url: `https://tse2.mm.bing.net/th?q=${encodeURIComponent(extractedName + ' handwritten style')}&w=1024&h=1024` }
     ];
@@ -520,7 +525,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v20.0 - Signature Specialist</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v21.0 - Exact Match</span></h1>
       </div>
       
       <div class="header-actions">
