@@ -36,13 +36,18 @@ const showKeyInput = ref(false);
 const mode = ref<Mode>('chat');
 const isDemoMode = ref(true);
 
-// Models
+// Models (All FREE via Groq API)
 const availableModels = [
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 (High Intelligence)', icon: '🧠' },
-  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout (Vision)', icon: '👁️' },
-  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 (Ultra Fast)', icon: '⚡' },
-  { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Large Context)', icon: '📚' },
-  { id: 'gemma2-9b-it', name: 'Gemma 2 (Efficient)', icon: '💎' }
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', icon: '🧠' },
+  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout', icon: '👁️' },
+  { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 70B', icon: '🔬' },
+  { id: 'qwen-qwq-32b', name: 'Qwen QWQ 32B', icon: '🌟' },
+  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Fast', icon: '⚡' },
+  { id: 'llama-guard-3-8b', name: 'Llama Guard 3', icon: '🛡️' },
+  { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', icon: '📚' },
+  { id: 'gemma2-9b-it', name: 'Gemma 2 9B', icon: '💎' },
+  { id: 'allam-2-7b', name: 'ALLaM 2 7B (Arabic)', icon: '🌙' },
+  { id: 'mistral-saba-24b', name: 'Mistral Saba 24B', icon: '🌊' }
 ];
 const selectedModel = ref('llama-3.3-70b-versatile');
 
