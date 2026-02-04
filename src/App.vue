@@ -215,7 +215,8 @@ const handleImageGen = async () => {
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
-    const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nofeed=true&nologo=true`;
+    // Using the dedicated image bridge which is most compatible with hotlinking
+    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&nologo=true`;
     
     generationStatus.value = 'Painting your vision (usually 5-10s)...';
     lastGeneratedUrl.value = url;
@@ -638,6 +639,7 @@ const handleSubmit = async () => {
               v-show="!isImageLoading && generatedImageUrl && !imageError" 
               :src="generatedImageUrl" 
               class="generated-img" 
+              crossorigin="anonymous"
               @load="isImageLoading = false; isLoading = false; imageError = false"
               @error="handleImageError"
             />
