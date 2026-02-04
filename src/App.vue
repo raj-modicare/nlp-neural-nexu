@@ -217,24 +217,28 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Smart Logic: Check if user wants a Logo/Text or a Landmark
-  const isLogoRequest = /logo|icon|writing|text|font|draw|sketch/i.test(promptText);
+  // Smart Logic: Check if user wants a Logo/Text/Signature
+  const isLogoRequest = /logo|icon|writing|text|font|draw|sketch|signature/i.test(promptText);
   
   if (isLogoRequest) {
     // specialized prompt for text/logos
     const basePrompt = encodeURIComponent(`${promptText}, typography design, centered text, minimal vector, black ink on white background`);
     
-    // Name Extraction Strategy: Try to find the name to prioritize it in search
-    // "logo of Rajesh" -> extracting "Rajesh"
-    const nameMatch = promptText.match(/of\s+([a-zA-Z]+)/i) || promptText.match(/name\s+([a-zA-Z]+)/i);
+    // Name Extraction
+    const nameMatch = promptText.match(/of\s+([a-zA-Z]+)/i) || promptText.match(/name\s+([a-zA-Z]+)/i) || promptText.match(/signature\s+([a-zA-Z]+)/i);
     const extractedName = nameMatch ? nameMatch[1] : promptText;
-    const backupQuery = `${extractedName} calligraphy logo text`;
+    
+    // Signature vs Logo Logic
+    const isSignature = /signature/i.test(promptText);
+    const backupQuery = isSignature 
+      ? `${extractedName} handwritten signature white background` 
+      : `${extractedName} calligraphy logo text`;
 
     generatorPaths = [
-      { name: 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+      { name: isSignature ? 'Signature Artist' : 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${basePrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
       { name: 'Typography Engine', url: `https://pollinations.ai/p/${encodeURIComponent(promptText + ' text logo')}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-      { name: 'Name Design Archive', url: `https://tse1.mm.bing.net/th?q=${encodeURIComponent(backupQuery)}&w=1024&h=1024` },
-      { name: 'Calligraphy Mirror', url: `https://tse2.mm.bing.net/th?q=${encodeURIComponent(extractedName + ' handwritten signature')}&w=1024&h=1024` }
+      { name: 'Design Archive', url: `https://tse1.mm.bing.net/th?q=${encodeURIComponent(backupQuery)}&w=1024&h=1024` },
+      { name: 'Calligraphy Mirror', url: `https://tse2.mm.bing.net/th?q=${encodeURIComponent(extractedName + ' handwritten style')}&w=1024&h=1024` }
     ];
   } else {
      // Existing v15.0 logic for Landmarks/Photos
@@ -516,7 +520,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v19.0 - Name First</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v20.0 - Signature Specialist</span></h1>
       </div>
       
       <div class="header-actions">
