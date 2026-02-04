@@ -596,7 +596,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v21.0 - Exact Match</span></h1>
+        <h1 class="title">Antigravity <span class="version-tag">v21.0</span></h1>
       </div>
       
       <div class="header-actions">
