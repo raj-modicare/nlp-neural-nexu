@@ -278,11 +278,20 @@ const tryStableBridge = () => {
   isImageLoading.value = true;
   const promptText = textInput.value || input.value;
   const tag = promptText ? promptText.split(' ')[0] : 'monument';
-  // LoremFlickr is extremely stable compared to source.unsplash
+  // LoremFlickr is extremely stable
   const url = `https://loremflickr.com/1024/1024/${tag}?random=${Math.random()}`;
   lastGeneratedUrl.value = url;
   generatedImageUrl.value = url;
-  generationStatus.value = 'Connecting to 100% Stable Bridge...';
+  generationStatus.value = 'Connecting to Emergency Photo Bridge...';
+};
+
+const resetGenerator = () => {
+  generatedImageUrl.value = '';
+  isImageLoading.value = false;
+  imageError.value = false;
+  isLoading.value = false;
+  input.value = '';
+  textInput.value = '';
 };
 
 const openImageDirectly = () => {
@@ -455,7 +464,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v4.1</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v4.2 - Stable</span></h1>
       </div>
       
       <div class="header-actions">
@@ -673,6 +682,9 @@ const handleSubmit = async () => {
                  <button @click="tryStableBridge" class="btn-primary">
                    🔵 Use 4K Stable Bridge
                  </button>
+                 <button @click="resetGenerator" class="btn-secondary-sm">
+                    🔄 Reset Generator
+                  </button>
                  <a :href="lastGeneratedUrl" target="_blank" class="text-link mt-2">
                    🔗 View Raw Link (Bypass App)
                  </a>
@@ -684,7 +696,6 @@ const handleSubmit = async () => {
               v-show="!isImageLoading && generatedImageUrl && !imageError" 
               :src="generatedImageUrl" 
               class="generated-img" 
-              crossorigin="anonymous"
               @load="isImageLoading = false; isLoading = false; imageError = false"
               @error="handleImageError"
             />
