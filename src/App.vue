@@ -217,17 +217,27 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Strict Filter Strategy
-  // We use the '/all' modifier to force LoremFlickr to match EVERY keyword, not just one.
-  // "White House USA" -> "white,house,usa,landmark" -> MUST match all.
-  const strictTags = `${promptText.toLowerCase().replace(/\s+/g, ',')},landmark`;
+  // Smart Logic: Check if user wants a Logo/Text or a Landmark
+  const isLogoRequest = /logo|icon|writing|text|font|draw|sketch/i.test(promptText);
   
-  generatorPaths = [
-    { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-    { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
-    { name: 'Strict Match Bridge', url: `https://loremflickr.com/1024/1024/${strictTags}/all?random=${seed}` },
-    { name: 'Backup Search Mirror', url: `https://tse1.mm.bing.net/th?q=${encodedPrompt} landmark&w=1024&h=1024` }
-  ];
+  if (isLogoRequest) {
+    // specialized prompt for text/logos
+    const logoPrompt = encodeURIComponent(`${promptText}, vector line art, minimal, calligraphy, high contrast, typography design, white background`);
+    generatorPaths = [
+      { name: 'Logo Artist (Flux)', url: `https://pollinations.ai/p/${logoPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+      { name: 'Sketch Engine (Turbo)', url: `https://pollinations.ai/p/${logoPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+      { name: 'Design Retry', url: `https://pollinations.ai/p/${logoPrompt}?width=1024&height=1024&seed=${seed + 1}&model=flux&nologo=true` }
+    ];
+  } else {
+     // Existing v15.0 logic for Landmarks/Photos
+     const strictTags = `${promptText.toLowerCase().replace(/\s+/g, ',')},landmark`;
+     generatorPaths = [
+       { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+       { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+       { name: 'Strict Match Bridge', url: `https://loremflickr.com/1024/1024/${strictTags}/all?random=${seed}` },
+       { name: 'Backup Search Mirror', url: `https://tse1.mm.bing.net/th?q=${encodedPrompt} landmark&w=1024&h=1024` }
+     ];
+  }
 
   currentAttempt = 0;
   totalPaths = generatorPaths.length;
@@ -498,7 +508,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v15.0 - Strict Filter</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v16.0 - Type Master</span></h1>
       </div>
       
       <div class="header-actions">
