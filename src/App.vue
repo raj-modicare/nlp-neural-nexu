@@ -58,7 +58,12 @@ const clearApiKey = () => {
 
 const getOpenAIClient = () => {
   if (!apiKey.value) throw new Error("API Key missing");
-  return new OpenAI({ apiKey: apiKey.value, dangerouslyAllowBrowser: true });
+  // Switching to Groq: It uses the same OpenAI library but a different URL
+  return new OpenAI({ 
+    apiKey: apiKey.value, 
+    baseURL: "https://api.groq.com/openai/v1", 
+    dangerouslyAllowBrowser: true 
+  });
 };
 
 const handleDemoSubmit = async () => {
@@ -111,7 +116,7 @@ const handleSubmit = async () => {
 
       const completion = await client.chat.completions.create({
         messages: [{ role: 'system', content: "You are a helpful, witty, and intelligent AI assistant." }, ...chatHistory.value],
-        model: 'gpt-4o-mini',
+        model: 'llama-3.3-70b-versatile',
       });
 
       const reply = completion.choices[0].message.content || "No response";
@@ -122,7 +127,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Summarize the following text concisely." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'gpt-4o-mini',
+        model: 'llama-3.3-70b-versatile',
       });
       result.value = completion.choices[0].message.content || "Could not summarize.";
     } else if (mode.value === 'sentiment') {
@@ -131,7 +136,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Analyze the sentiment of the following text. Respond with: 'Positive', 'Negative', or 'Neutral', followed by a brief explanation." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'gpt-4o-mini',
+        model: 'llama-3.3-70b-versatile',
       });
       result.value = completion.choices[0].message.content || "Could not analyze.";
     } else if (mode.value === 'translate') {
@@ -140,7 +145,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Translate the following text into English. If it is already in English, translate it into Hindi." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'gpt-4o-mini',
+        model: 'llama-3.3-70b-versatile',
       });
       result.value = completion.choices[0].message.content || "Could not translate.";
     }
