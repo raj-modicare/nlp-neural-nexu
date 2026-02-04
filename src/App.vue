@@ -9,7 +9,10 @@ import {
   Send, 
   Sparkles, 
   Loader2,
-  Languages
+  Languages,
+  Mic,
+  MicOff,
+  Volume2
 } from 'lucide-vue-next';
 import OpenAI from 'openai';
 
@@ -32,7 +35,37 @@ const isLoading = ref(false);
 const textInput = ref('');
 const result = ref('');
 
-// Load API Key
+// Voice State
+const isListening = ref(false);
+const recognition = (window as any).webkitSpeechRecognition ? new ((window as any).webkitSpeechRecognition)() : null;
+
+if (recognition) {
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+}
+
+// Voice Functions
+const startListening = (target: 'input' | 'textInput') => {
+  if (!recognition) return alert("Speech recognition not supported in this browser.");
+  
+  isListening.value = true;
+  recognition.start();
+
+  recognition.onresult = (event: any) => {
+    const transcript = event.results[0][0].transcript;
+    if (target === 'input') input.value += transcript;
+    else textInput.value += transcript;
+  };
+
+  recognition.onend = () => { isListening.value = false; };
+  recognition.onerror = () => { isListening.value = false; };
+};
+
+const speak = (text: string) => {
+  const utterance = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(utterance);
+};
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
   if (storedKey) {
@@ -278,10 +311,18 @@ const handleSubmit = async () => {
         </div>
         
         <div class="chat-input-area">
+          <button 
+            @click="startListening('input')" 
+            :class="['icon-btn', { 'pulse-red': isListening }]"
+            title="Speak instead of typing"
+          >
+            <component :is="isListening ? MicOff : Mic" :size="20" />
+          </button>
+          
           <input 
             v-model="input"
             @keydown.enter="handleSubmit"
-            placeholder="Type your message..."
+            placeholder="Type or speak your message..."
             class="input-field flex-1"
           />
           <button @click="handleSubmit" :disabled="isLoading" class="btn-primary">
@@ -302,14 +343,27 @@ const handleSubmit = async () => {
         </div>
 
         <div class="action-bar">
+           <button 
+             @click="startListening('textInput')" 
+             class="btn-secondary"
+             style="margin-right: 1rem"
+           >
+             <Mic :size="18" /> {{ isListening ? 'Listening...' : 'Dictate' }}
+           </button>
+           
            <button @click="handleSubmit" :disabled="isLoading" class="btn-primary">
              <component :is="isLoading ? Loader2 : Sparkles" :class="{'icon-spin': isLoading, 'icon-sm': true}" />
-             {{ mode === 'summary' ? 'Generate Summary' : 'Analyze Sentiment' }}
+             {{ mode === 'summary' ? 'Generate Summary' : mode === 'sentiment' ? 'Analyze Sentiment' : 'Translate Text' }}
            </button>
         </div>
 
         <div v-if="result" class="result-box animate-fade-in">
-          <h3>Result</h3>
+          <div class="result-header">
+            <h3>Result</h3>
+            <button @click="speak(result)" class="icon-btn-sm" title="Read Aloud">
+              <Volume2 :size="16" />
+            </button>
+          </div>
           <p>{{ result }}</p>
         </div>
       </div>
@@ -619,6 +673,56 @@ const handleSubmit = async () => {
   white-space: pre-wrap;
   color: #e5e7eb;
   margin: 0;
+}
+
+/* Voice UI */
+.icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.icon-btn-sm {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+
+.icon-btn-sm:hover { color: #818cf8; }
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.pulse-red {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 /* Utilities */
