@@ -202,6 +202,10 @@ const handleImageUpload = (event: Event) => {
 };
 
 // Image Generation Logic
+let currentAttempt = 0;
+let totalPaths = 0;
+let generatorPaths: {name: string, url: string}[] = [];
+
 const handleImageGen = async () => {
   const promptText = textInput.value || input.value;
   if (!promptText) return;
@@ -213,47 +217,56 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
+  // Full phrase tags for better accuracy (Red Fort India -> Red-Fort-India)
+  const accuracyTags = promptText.replace(/\s+/g, '-').toLowerCase();
   
-  // Unstoppable Cycling Strategy
-  const tag = promptText.replace(/\s+/g, ','); // Best for image search tags
-  const paths = [
+  generatorPaths = [
     { name: 'AI Server (Dynamic)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true` },
     { name: 'AI Server (Backup)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}` },
-    { name: 'Photo Bridge', url: `https://loremflickr.com/1024/1024/${tag}?random=${seed}` },
-    { name: 'Global Gallery', url: `https://source.unsplash.com/featured/1024x1024/?${encodedPrompt.replace(/%20/g, ',')}` }
+    { name: 'Accuracy Bridge', url: `https://loremflickr.com/1024/1024/${accuracyTags}?random=${seed}` },
+    { name: 'Regional Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${accuracyTags}` }
   ];
 
-  let attempt = 0;
-  
-  const tryNextPath = () => {
-    if (attempt < paths.length) {
-      generationStatus.value = `Accessing Path ${attempt + 1} of ${paths.length}...`;
-      lastGeneratedUrl.value = paths[attempt].url;
-      generatedImageUrl.value = paths[attempt].url;
-      attempt++;
-    } else {
-      // Only show error screen after ALL paths failed
-      imageError.value = true;
-      isImageLoading.value = false;
-      isLoading.value = false;
-      generationStatus.value = 'Connection Timeout. Switching to manual backup.';
-    }
-  };
-
+  currentAttempt = 0;
+  totalPaths = generatorPaths.length;
   tryNextPath();
-  
-  // Auto-cycle: Give AI 12 seconds per attempt, then 6 seconds for fallbacks
-  const cycleInterval = setInterval(() => {
-    if (isImageLoading.value) {
-       if (attempt < paths.length) {
-         tryNextPath();
-       } else {
-         clearInterval(cycleInterval);
-       }
+
+  // Rescue Interval: If image hangs (no load/error event), jump to next after 15s
+  const rescueTimer = setInterval(() => {
+    if (isImageLoading.value && currentAttempt < totalPaths) {
+      console.log("Image hung, rescue timer triggered...");
+      tryNextPath();
     } else {
-      clearInterval(cycleInterval);
+      clearInterval(rescueTimer);
     }
-  }, attempt <= 2 ? 12000 : 6000);
+  }, 15000);
+};
+
+const tryNextPath = () => {
+  if (currentAttempt < totalPaths) {
+    generationStatus.value = `Accessing Path ${currentAttempt + 1} of ${totalPaths}...`;
+    generatedImageUrl.value = generatorPaths[currentAttempt].url;
+    lastGeneratedUrl.value = generatorPaths[currentAttempt].url;
+    currentAttempt++;
+  } else {
+    // End of the line
+    imageError.value = true;
+    isImageLoading.value = false;
+    isLoading.value = false;
+    generationStatus.value = 'Out of options. Please try a different prompt.';
+  }
+};
+
+const handleImageError = () => {
+  // If we haven't exhausted paths, jump to next one IMMEDIATELY on error
+  if (isImageLoading.value && currentAttempt < totalPaths) {
+     console.log("Image tag failed, jumping to next path...");
+     tryNextPath();
+  } else if (currentAttempt >= totalPaths) {
+     imageError.value = true;
+     isImageLoading.value = false;
+     isLoading.value = false;
+  }
 };
 
 const downloadImage = async () => {
@@ -276,22 +289,20 @@ const downloadImage = async () => {
   }
 };
 
-const handleImageError = () => {
-  // We no longer crash on error. The interval above will try the next path.
-  // We only log it for debugging and allow the next attempt to proceed.
-  console.warn("Path failed, attempting next if available...");
+const handleImageErrorDummy = () => {
+  // Keeping this for potential use in download fetch failures
 };
 
 const tryStableBridge = () => {
   imageError.value = false;
   isImageLoading.value = true;
   const promptText = textInput.value || input.value;
-  const tag = promptText ? promptText.split(' ')[0] : 'monument';
-  // LoremFlickr is extremely stable
+  const tag = promptText ? promptText.replace(/\s+/g, '-').toLowerCase() : 'monument';
+  // Final manual rescue bridge
   const url = `https://loremflickr.com/1024/1024/${tag}?random=${Math.random()}`;
   lastGeneratedUrl.value = url;
   generatedImageUrl.value = url;
-  generationStatus.value = 'Connecting to Emergency Photo Bridge...';
+  generationStatus.value = 'Connecting to 4K Global Gallery...';
 };
 
 const resetGenerator = () => {
@@ -473,7 +484,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v5.1 - High Accuracy</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v5.2 - Self Correcting</span></h1>
       </div>
       
       <div class="header-actions">
@@ -672,8 +683,8 @@ const handleSubmit = async () => {
                <Loader2 class="icon-spin" :size="48" />
                <p>{{ generationStatus }}</p>
                <div class="loader-actions">
-                 <button @click="handleImageError" class="btn-secondary-sm">
-                   Skip Wait
+                 <button @click="tryNextPath" class="btn-secondary-sm">
+                   Skip Wait / Try Next Path
                  </button>
                  <a :href="lastGeneratedUrl" target="_blank" class="direct-link-btn">
                    [Try Direct Link]
