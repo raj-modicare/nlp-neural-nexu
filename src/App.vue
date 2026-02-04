@@ -215,12 +215,18 @@ const handleImageGen = async () => {
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
-    // Using the dedicated image bridge which is most compatible with hotlinking
-    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&nologo=true`;
     
-    generationStatus.value = 'Painting your vision (usually 5-10s)...';
+    // Primary URL (AI)
+    const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+    // Secondary Fallback (Stable Photo Bridge) - used if the user clicks open directly and first failed
+    const fallbackUrl = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0]}`;
+    
+    generationStatus.value = 'Painting your vision (Server 1)...';
     lastGeneratedUrl.value = url;
     generatedImageUrl.value = url;
+    
+    // If the image fails to load in the UI, handleImageError will kick in 
+    // and offer the user the fallback or a direct link.
   } catch (error) {
     generationStatus.value = 'Connection Failed.';
     imageError.value = true;
