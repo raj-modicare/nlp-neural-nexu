@@ -67,23 +67,32 @@ const lastGeneratedUrl = ref('');
 const generationStatus = ref('');
 
 // Face AI State
-const faceApi = (window as any).faceapi;
 const faceImageInput = ref<HTMLInputElement | null>(null);
 const faceImageUrl = ref<string | null>(null);
 const faceResults = ref<any[]>([]);
 const isFaceLoading = ref(false);
 const faceModelsLoaded = ref(false);
+const faceError = ref('');
 
 const loadFaceModels = async () => {
-  if (faceModelsLoaded.value || !faceApi) return;
-  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
-  await Promise.all([
-    faceApi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-    faceApi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-    faceApi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-    faceApi.nets.ageGenderNet.loadFromUri(MODEL_URL)
-  ]);
-  faceModelsLoaded.value = true;
+  const faceapi = (window as any).faceapi;
+  if (!faceapi) { faceError.value = 'Face API not loaded. Refresh page.'; return false; }
+  if (faceModelsLoaded.value) return true;
+  
+  try {
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+      faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+    ]);
+    faceModelsLoaded.value = true;
+    return true;
+  } catch (err) {
+    faceError.value = 'Failed to load AI models.';
+    return false;
+  }
 };
 
 const triggerFaceUpload = () => faceImageInput.value?.click();
@@ -93,25 +102,31 @@ const handleFaceUpload = async (event: Event) => {
   if (!file) return;
   isFaceLoading.value = true;
   faceResults.value = [];
+  faceError.value = '';
   
   const reader = new FileReader();
   reader.onload = async (e) => {
     faceImageUrl.value = e.target?.result as string;
-    await loadFaceModels();
+    const loaded = await loadFaceModels();
+    if (!loaded) { isFaceLoading.value = false; return; }
     
+    const faceapi = (window as any).faceapi;
     const img = new (window as any).Image();
     img.src = faceImageUrl.value;
     img.onload = async () => {
-      if (!faceApi) { isFaceLoading.value = false; return; }
-      const detections = await faceApi.detectAllFaces(img, new faceApi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceExpressions()
-        .withAgeAndGender();
-      faceResults.value = detections.map((d: any) => ({
-        age: Math.round(d.age),
-        gender: d.gender,
-        expression: Object.entries(d.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0]
-      }));
+      try {
+        const detections = await faceapi.detectAllFaces(img)
+          .withFaceLandmarks()
+          .withFaceExpressions()
+          .withAgeAndGender();
+        faceResults.value = detections.map((d: any) => ({
+          age: Math.round(d.age),
+          gender: d.gender,
+          expression: Object.entries(d.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0]
+        }));
+      } catch (err) {
+        faceError.value = 'Detection failed. Try a clearer image.';
+      }
       isFaceLoading.value = false;
     };
   };
@@ -878,7 +893,11 @@ const handleSubmit = async () => {
             </div>
           </div>
           
-          <div v-if="faceImageUrl && !isFaceLoading && faceResults.length === 0" class="no-faces">
+          <div v-if="faceError" class="face-error">
+            <p>⚠️ {{ faceError }}</p>
+          </div>
+          
+          <div v-if="faceImageUrl && !isFaceLoading && faceResults.length === 0 && !faceError" class="no-faces">
             <p>No faces detected. Try another image.</p>
           </div>
         </div>
