@@ -217,15 +217,16 @@ const handleImageGen = async () => {
   
   const seed = Math.floor(Math.random() * 1000000);
   const encodedPrompt = encodeURIComponent(promptText);
-  // Smart Context Strategy
-  // hyphenating keeps specific phrases together (White House -> white-house)
-  const smartTag = promptText.trim().replace(/\s+/g, '-');
-  
+  // Twin-Turbo Strategy
+  // Removing spaces completely often helps finding exact brand/landmark names
+  const smartTag = promptText.toLowerCase().replace(/\s+/g, '');
+  const strictPrompt = `${promptText} architectural photo, highly detailed, daylight`;
+
   generatorPaths = [
-    { name: 'AI Server (Flux Model)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
-    { name: 'AI Server (Retry)', url: `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed + 1}&model=flux&nologo=true` },
-    { name: 'AI Server (Turbo)', url: `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}&model=turbo` },
-    { name: 'Smart Context Bridge', url: `https://loremflickr.com/1024/1024/${smartTag}?random=${seed}` }
+    { name: 'AI Server (Turbo Fast)', url: `https://pollinations.ai/p/${encodeURIComponent(strictPrompt)}?width=1024&height=1024&seed=${seed}&model=turbo&nologo=true` },
+    { name: 'AI Server (Flux HQ)', url: `https://pollinations.ai/p/${encodeURIComponent(strictPrompt)}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true` },
+    { name: 'Smart Context Bridge', url: `https://loremflickr.com/1024/1024/${smartTag}?random=${seed}` },
+    { name: 'Regional Proxy', url: `https://images.weserv.nl/?url=loremflickr.com/1024/1024/${smartTag}?random=${seed}` }
   ];
 
   currentAttempt = 0;
@@ -497,7 +498,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v11.0 - Smart Context</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v12.0 - Twin Turbo</span></h1>
       </div>
       
       <div class="header-actions">
