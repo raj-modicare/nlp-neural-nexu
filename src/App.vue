@@ -210,7 +210,8 @@ const handleImageGen = async () => {
   try {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
-    const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+    // Using the dedicated image endpoint which is more stable
+    const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&model=flux&safe=true`;
     
     // Clear inputs immediately
     input.value = '';
