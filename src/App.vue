@@ -155,10 +155,39 @@ const handleImageUpload = (event: Event) => {
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    attachedImage.value = e.target?.result as string;
-    if (mode.value !== 'chat') mode.value = 'chat';
-    // Switch to vision model automatically if image is attached
-    selectedModel.value = 'llama-3.2-11b-vision-preview';
+    const img = new window.Image();
+    img.onload = () => {
+      // Create canvas for resizing
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      
+      // Max dimensions for AI analysis (balanced for detail and speed)
+      const MAX_SIZE = 800; 
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Convert to optimized JPEG string
+      attachedImage.value = canvas.toDataURL('image/jpeg', 0.8);
+      
+      if (mode.value !== 'chat') mode.value = 'chat';
+      selectedModel.value = 'llama-3.2-11b-vision-preview';
+    };
+    img.src = e.target?.result as string;
   };
   reader.readAsDataURL(file);
 };
@@ -221,6 +250,12 @@ const handleDemoSubmit = async () => {
   } else if (mode.value === 'translate') {
     result.value = "[DEMO TRANSLATION]\nThis is a simulated translation of your text. In Live Mode, this would be converted perfectly to English or Hindi!";
   }
+
+  if (attachedImage.value && mode.value === 'chat') {
+    chatHistory.value.push({ role: 'user', content: "[Image Uploaded]" });
+    chatHistory.value.push({ role: 'assistant', content: "[DEMO VISION]\nI can see your image! In Live Mode using Llama 3.2 Vision, I would now describe exactly what's in that picture (e.g., colors, objects, text)." });
+    attachedImage.value = null;
+  }
 };
 
 const handleSubmit = async () => {
@@ -236,7 +271,8 @@ const handleSubmit = async () => {
 
   try {
     const client = getOpenAIClient();
-    // ... rest of the live logic    // 2. CHAT MODE LOGIC
+    
+    // 2. CHAT MODE LOGIC
     if (mode.value === 'chat') {
       const userMsg: Message = { role: 'user', content: input.value };
       chatHistory.value.push(userMsg);
