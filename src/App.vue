@@ -63,7 +63,9 @@ const isLoading = ref(false);
 const generatedImageUrl = ref('');
 const isImageLoading = ref(false);
 const imageError = ref(false);
+const useFallback = ref(false);
 const lastGeneratedUrl = ref('');
+const fallbackUrl = ref('');
 const generationStatus = ref('');
 
 // Other Modes State
@@ -209,6 +211,7 @@ const handleImageGen = async () => {
   isLoading.value = true;
   isImageLoading.value = true;
   imageError.value = false;
+  useFallback.value = false;
   generatedImageUrl.value = '';
   generationStatus.value = 'Contacting AI Art Server...';
   
@@ -216,17 +219,16 @@ const handleImageGen = async () => {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
     
-    // Primary URL (AI)
+    // Primary AI URL
     const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
-    // Secondary Fallback (Stable Photo Bridge) - used if the user clicks open directly and first failed
-    const fallbackUrl = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0]}`;
+    
+    // Stable Photo Bridge Fallback
+    const photoUrl = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'art'}`;
     
     generationStatus.value = 'Painting your vision (Server 1)...';
     lastGeneratedUrl.value = url;
+    fallbackUrl.value = photoUrl;
     generatedImageUrl.value = url;
-    
-    // If the image fails to load in the UI, handleImageError will kick in 
-    // and offer the user the fallback or a direct link.
   } catch (error) {
     generationStatus.value = 'Connection Failed.';
     imageError.value = true;
@@ -259,6 +261,14 @@ const handleImageError = () => {
   isImageLoading.value = false;
   isLoading.value = false;
   imageError.value = true;
+};
+
+const tryFallback = () => {
+  imageError.value = false;
+  isImageLoading.value = true;
+  useFallback.value = true;
+  generatedImageUrl.value = fallbackUrl.value;
+  generationStatus.value = 'Switching to Stable High-Speed Bridge...';
 };
 
 const openImageDirectly = () => {
@@ -634,11 +644,16 @@ const handleSubmit = async () => {
 
             <div v-if="imageError" class="art-error-state">
                <Sparkles class="icon-large opacity-20" />
-               <p>The image service is slightly slow. Don't worry, your art is ready!</p>
-               <button @click="openImageDirectly" class="btn-primary">
-                 <Image :size="18" /> Click to View Your Art
-               </button>
-               <p class="text-sm opacity-50" style="margin-top: 1rem">Sometimes direct viewing works better for high-res art.</p>
+               <p>The primary AI server is currently busy or down.</p>
+               <div class="flex-col gap-sm">
+                 <button @click="tryFallback" class="btn-primary" style="margin-bottom: 0.5rem">
+                   ⚡ Try Alternative Stable Bridge
+                 </button>
+                 <button @click="openImageDirectly" class="btn-secondary">
+                   🔗 Open Direct AI Link
+                 </button>
+               </div>
+               <p class="text-sm opacity-50" style="margin-top: 1rem">Server status: 502 Bad Gateway (Maintenance)</p>
             </div>
 
             <img 
