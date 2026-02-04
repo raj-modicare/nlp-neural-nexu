@@ -219,23 +219,31 @@ const handleImageGen = async () => {
     const seed = Math.floor(Math.random() * 1000000);
     const encodedPrompt = encodeURIComponent(promptText);
     
-    // Primary AI URL
-    const url = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+    // Triple Path Strategy
+    const paths = [
+      `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`,
+      `https://image.pollinations.ai/prompt/${encodedPrompt}.jpg?width=1024&height=1024&seed=${seed}`,
+      `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'art'}`
+    ];
     
-    // Stable Photo Bridge Fallback
-    const photoUrl = `https://loremflickr.com/1024/1024/${encodedPrompt.split('%20')[0] || 'art'}`;
+    lastGeneratedUrl.value = paths[0];
+    fallbackUrl.value = paths[2];
     
-    generationStatus.value = 'Painting your vision (Server 1)...';
-    lastGeneratedUrl.value = url;
-    fallbackUrl.value = photoUrl;
-    generatedImageUrl.value = url;
+    let currentPathIdx = 0;
+    generatedImageUrl.value = paths[currentPathIdx];
+    generationStatus.value = `Painting Vision (Path ${currentPathIdx + 1})...`;
 
-    // Safety Timeout: If image doesn't load in 15s, show backup options
-    setTimeout(() => {
-      if (isImageLoading.value && generatedImageUrl.value === url) {
-        handleImageError();
+    // Auto-Cycle paths if they hang
+    const cycleInterval = setInterval(() => {
+      if (isImageLoading.value && currentPathIdx < paths.length - 1) {
+        currentPathIdx++;
+        generatedImageUrl.value = paths[currentPathIdx];
+        generationStatus.value = `Retrying on Path ${currentPathIdx + 1}...`;
+      } else {
+        clearInterval(cycleInterval);
+        if (isImageLoading.value) handleImageError();
       }
-    }, 15000);
+    }, 8000);
   } catch (error) {
     generationStatus.value = 'Connection Failed.';
     imageError.value = true;
@@ -463,7 +471,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v2.6</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v2.7</span></h1>
       </div>
       
       <div class="header-actions">
@@ -661,9 +669,14 @@ const handleSubmit = async () => {
             <div v-if="isImageLoading" class="art-loader">
                <Loader2 class="icon-spin" :size="48" />
                <p>{{ generationStatus }}</p>
-               <button @click="handleImageError" class="btn-secondary-sm" style="margin-top: 1rem">
-                 Stop & Try Backup
-               </button>
+               <div class="loader-actions">
+                 <button @click="handleImageError" class="btn-secondary-sm">
+                   Skip Wait
+                 </button>
+                 <a :href="lastGeneratedUrl" target="_blank" class="direct-link-btn">
+                   [Try Direct Link]
+                 </a>
+               </div>
             </div>
 
             <div v-if="imageError" class="art-error-state">
@@ -1317,6 +1330,21 @@ button.btn-primary:active {
 .btn-secondary-sm:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+.loader-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.direct-link-btn {
+  font-size: 0.7rem;
+  color: #818cf8;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .btn-primary:hover {
