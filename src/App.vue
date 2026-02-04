@@ -103,13 +103,19 @@ const handlePdfUpload = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file || file.type !== 'application/pdf') return;
 
+  const pdfLib = (window as any).pdfjsLib;
+  if (!pdfLib) {
+    alert("PDF library is still loading. Please try again in 2 seconds.");
+    return;
+  }
+
   isExtracting.value = true;
   const reader = new FileReader();
   
   reader.onload = async () => {
     try {
       const typedarray = new Uint8Array(reader.result as ArrayBuffer);
-      const pdf = await pdfjsLib.getDocument(typedarray).promise;
+      const pdf = await pdfLib.getDocument(typedarray).promise;
       let fullText = '';
 
       for (let i = 1; i <= pdf.numPages; i++) {
