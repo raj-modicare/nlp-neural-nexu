@@ -214,6 +214,10 @@ const handleImageGen = async () => {
       generatedImageUrl.value = url;
       isLoading.value = false;
     };
+    img.onerror = () => {
+      alert("Image generation timed out or failed. Please try a different prompt.");
+      isLoading.value = false;
+    };
     img.src = url;
   } catch (error) {
     alert("Error generating image: " + error);
@@ -605,7 +609,7 @@ const handleSubmit = async () => {
           <label>Input Text</label>
           <textarea 
             v-model="textInput"
-            :placeholder="mode === 'summary' ? 'Paste text to summarize...' : mode === 'sentiment' ? 'Paste text to analyze...' : `Paste text to translate into ${targetLanguage}...`"
+            :placeholder="mode === 'summary' ? 'Paste text to summarize...' : mode === 'sentiment' ? 'Paste text to analyze...' : mode === 'translate' ? `Paste text to translate into ${targetLanguage}...` : 'Describe the image you want to create (e.g. A sunset over the Taj Mahal)...'"
             class="textarea-field"
           ></textarea>
         </div>
