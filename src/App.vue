@@ -14,7 +14,9 @@ import {
   MicOff,
   Volume2,
   Paperclip,
-  Image
+  Image,
+  Palette,
+  Download
 } from 'lucide-vue-next';
 import OpenAI from 'openai';
 
@@ -25,7 +27,7 @@ if (pdfjsLib) {
 }
 
 // Types
-type Mode = 'chat' | 'summary' | 'sentiment' | 'translate';
+type Mode = 'chat' | 'summary' | 'sentiment' | 'translate' | 'image-gen';
 type Message = { role: 'user' | 'assistant'; content: string };
 
 // State
@@ -191,6 +193,44 @@ const handleImageUpload = (event: Event) => {
   };
   reader.readAsDataURL(file);
 };
+
+// Image Generation State
+const generatedImageUrl = ref('');
+
+const handleImageGen = async () => {
+  if (!textInput.value) return;
+  isLoading.value = true;
+  generatedImageUrl.value = '';
+  
+  try {
+    // Using Pollinations.ai for free, high-quality image generation
+    const seed = Math.floor(Math.random() * 1000000);
+    const prompt = encodeURIComponent(textInput.value);
+    const url = `https://pollinations.ai/p/${prompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
+    
+    // We "pre-fetch" the image to show loading state correctly
+    const img = new window.Image();
+    img.onload = () => {
+      generatedImageUrl.value = url;
+      isLoading.value = false;
+    };
+    img.src = url;
+  } catch (error) {
+    alert("Error generating image: " + error);
+    isLoading.value = false;
+  }
+};
+
+const downloadImage = async () => {
+  if (!generatedImageUrl.value) return;
+  const response = await fetch(generatedImageUrl.value);
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `neural-nexus-art-${Date.now()}.jpg`;
+  link.click();
+};
 onMounted(() => {
   const storedKey = localStorage.getItem('openai_api_key');
   if (storedKey) {
@@ -249,6 +289,8 @@ const handleDemoSubmit = async () => {
                    "Neutral (Simulated): The tone appears balanced.";
   } else if (mode.value === 'translate') {
     result.value = "[DEMO TRANSLATION]\nThis is a simulated translation of your text. In Live Mode, this would be converted perfectly to English or Hindi!";
+  } else if (mode.value === 'image-gen') {
+    generatedImageUrl.value = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1024";
   }
 
   if (attachedImage.value && mode.value === 'chat') {
@@ -332,6 +374,8 @@ const handleSubmit = async () => {
         model: selectedModel.value,
       });
       result.value = completion.choices[0].message.content || "Could not translate.";
+    } else if (mode.value === 'image-gen') {
+      await handleImageGen();
     }
   } catch (error: any) {
     alert("Error: " + error.message);
@@ -441,6 +485,17 @@ const handleSubmit = async () => {
         </div>
         <h3>Translator</h3>
         <p>Multilingual Indian Support</p>
+      </button>
+
+      <button 
+        @click="mode = 'image-gen'"
+        :class="['nav-card', { active: mode === 'image-gen' }]"
+      >
+        <div class="nav-icon-box">
+          <Palette :size="24" />
+        </div>
+        <h3>AI Artist</h3>
+        <p>Generate Art from Text</p>
       </button>
     </div>
 
@@ -566,11 +621,22 @@ const handleSubmit = async () => {
            
            <button @click="handleSubmit" :disabled="isLoading" class="btn-primary">
              <component :is="isLoading ? Loader2 : Sparkles" :class="{'icon-spin': isLoading, 'icon-sm': true}" />
-             {{ mode === 'summary' ? 'Generate Summary' : mode === 'sentiment' ? 'Analyze Sentiment' : 'Translate Text' }}
+             {{ mode === 'summary' ? 'Generate Summary' : mode === 'sentiment' ? 'Analyze Sentiment' : mode === 'translate' ? 'Translate Text' : 'Create Masterpiece' }}
            </button>
         </div>
 
-        <div v-if="result" class="result-box animate-fade-in">
+        <div v-if="mode === 'image-gen' && generatedImageUrl" class="art-result animate-fade-in">
+          <div class="art-card">
+            <img :src="generatedImageUrl" class="generated-img" />
+            <div class="art-actions">
+              <button @click="downloadImage" class="btn-download">
+                <Download :size="18" /> Download High-Res
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="result" class="result-box animate-fade-in">
           <div class="result-header">
             <h3>Result</h3>
             <button @click="speak(result)" class="icon-btn-sm" title="Read Aloud">
@@ -685,7 +751,7 @@ const handleSubmit = async () => {
 
 @media (min-width: 768px) {
   .nav-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
@@ -1107,5 +1173,55 @@ const handleSubmit = async () => {
   animation: fadeIn 0.6s ease-out forwards;
   animation-delay: 0.2s;
   opacity: 0;
+}
+/* Art Result Styles */
+.art-result {
+  margin-top: 1rem;
+}
+
+.art-card {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.generated-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 600px;
+  object-fit: contain;
+}
+
+.art-actions {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.btn-download {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.btn-download:active {
+  transform: translateY(0);
 }
 </style>
