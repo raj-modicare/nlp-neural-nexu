@@ -24,7 +24,16 @@ type Message = { role: 'user' | 'assistant'; content: string };
 const apiKey = ref('');
 const showKeyInput = ref(false);
 const mode = ref<Mode>('chat');
-const isDemoMode = ref(true); // Default to Demo Mode so the user can see it working immediately
+const isDemoMode = ref(true);
+
+// Models
+const availableModels = [
+  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 (High Intelligence)', icon: '🧠' },
+  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 (Ultra Fast)', icon: '⚡' },
+  { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Large Context)', icon: '📚' },
+  { id: 'gemma2-9b-it', name: 'Gemma 2 (Efficient)', icon: '💎' }
+];
+const selectedModel = ref('llama-3.3-70b-versatile');
 
 // Chat State
 const chatHistory = ref<Message[]>([]);
@@ -149,7 +158,7 @@ const handleSubmit = async () => {
 
       const completion = await client.chat.completions.create({
         messages: [{ role: 'system', content: "You are a helpful, witty, and intelligent AI assistant." }, ...chatHistory.value],
-        model: 'llama-3.3-70b-versatile',
+        model: selectedModel.value,
       });
 
       const reply = completion.choices[0].message.content || "No response";
@@ -160,7 +169,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Summarize the following text concisely." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'llama-3.3-70b-versatile',
+        model: selectedModel.value,
       });
       result.value = completion.choices[0].message.content || "Could not summarize.";
     } else if (mode.value === 'sentiment') {
@@ -169,7 +178,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Analyze the sentiment of the following text. Respond with: 'Positive', 'Negative', or 'Neutral', followed by a brief explanation." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'llama-3.3-70b-versatile',
+        model: selectedModel.value,
       });
       result.value = completion.choices[0].message.content || "Could not analyze.";
     } else if (mode.value === 'translate') {
@@ -178,7 +187,7 @@ const handleSubmit = async () => {
           { role: 'system', content: "Translate the following text into English. If it is already in English, translate it into Hindi." },
           { role: 'user', content: textInput.value }
         ],
-        model: 'llama-3.3-70b-versatile',
+        model: selectedModel.value,
       });
       result.value = completion.choices[0].message.content || "Could not translate.";
     }
@@ -219,6 +228,17 @@ const handleSubmit = async () => {
         </button>
       </div>
     </header>
+
+    <!-- Model Selection Area -->
+    <div class="model-selector-container animate-fade-in-delayed-1">
+      <div v-for="m in availableModels" :key="m.id" 
+        @click="selectedModel = m.id"
+        :class="['model-pills', { active: selectedModel === m.id }]"
+      >
+        <span class="m-icon">{{ m.icon }}</span>
+        <span class="m-name">{{ m.name }}</span>
+      </div>
+    </div>
 
     <!-- API Key Input -->
     <div v-if="showKeyInput" class="key-input-area glass-panel animate-fade-in">
@@ -489,6 +509,48 @@ const handleSubmit = async () => {
   flex-direction: column;
   gap: 0.5rem;
 }
+
+/* Model Selector Styles */
+.model-selector-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.model-selector-container::-webkit-scrollbar {
+  display: none;
+}
+
+.model-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(17, 24, 39, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: #9ca3af;
+}
+
+.model-pills:hover {
+  background: rgba(31, 41, 55, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.model-pills.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #6366f1;
+  color: white;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+}
+
+.m-icon { font-size: 1rem; }
 
 .nav-card:hover {
   background: rgba(31, 41, 55, 0.6);
