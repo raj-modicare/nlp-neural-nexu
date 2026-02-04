@@ -217,8 +217,7 @@ const handleImageGen = async () => {
     
     lastGeneratedUrl.value = url;
     generatedImageUrl.value = url;
-    input.value = ''; 
-    textInput.value = '';
+    // Don't clear input until the image is actually painting or finished
   } catch (error) {
     alert("Request failed. Please try a simpler prompt.");
     isLoading.value = false;
@@ -614,6 +613,43 @@ const handleSubmit = async () => {
       </div>
 
       <div v-else class="text-mode-container">
+        <!-- AI Artist Result (Moved up for visibility) -->
+        <div v-if="mode === 'image-gen' && (generatedImageUrl || isImageLoading || imageError)" class="art-result animate-fade-in">
+          <div class="art-card">
+            <div v-if="isImageLoading" class="art-loader">
+               <Loader2 class="icon-spin" :size="48" />
+               <p>Painting your vision...</p>
+               <span class="text-xs opacity-50">This usually takes 5-10 seconds</span>
+            </div>
+
+            <div v-if="imageError" class="art-error-state">
+               <Sparkles class="icon-large opacity-20" />
+               <p>The image service is slightly slow. Don't worry, your art is ready!</p>
+               <button @click="openImageDirectly" class="btn-primary">
+                 <Image :size="18" /> Click to View Your Art
+               </button>
+               <p class="text-sm opacity-50" style="margin-top: 1rem">Sometimes direct viewing works better for high-res art.</p>
+            </div>
+
+            <img 
+              v-show="!isImageLoading && generatedImageUrl && !imageError" 
+              :src="generatedImageUrl" 
+              class="generated-img" 
+              @load="isImageLoading = false; isLoading = false; imageError = false"
+              @error="handleImageError"
+            />
+            
+            <div v-if="!isImageLoading && generatedImageUrl && !imageError" class="art-actions">
+              <button @click="downloadImage" class="btn-download">
+                <Download :size="18" /> Save to Device
+              </button>
+              <button @click="openImageDirectly" class="btn-secondary" style="margin-left: 1rem">
+                🔗 View Source
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Language Selector for Translator -->
         <div v-if="mode === 'translate'" class="language-selector animate-fade-in">
           <label>Translate to:</label>
@@ -647,48 +683,13 @@ const handleSubmit = async () => {
              <Mic :size="18" /> {{ isListening ? 'Listening...' : 'Dictate' }}
            </button>
            
-           <button @click="handleSubmit" :disabled="isLoading" class="btn-primary">
-             <component :is="isLoading ? Loader2 : Sparkles" :class="{'icon-spin': isLoading, 'icon-sm': true}" />
-             {{ mode === 'summary' ? 'Generate Summary' : mode === 'sentiment' ? 'Analyze Sentiment' : mode === 'translate' ? 'Translate Text' : 'Create Masterpiece' }}
-           </button>
+            <button @click="mode === 'image-gen' ? handleImageGen() : handleSubmit()" :disabled="isLoading" class="btn-primary">
+              <component :is="isLoading ? Loader2 : (mode === 'image-gen' ? Palette : Sparkles)" :class="{'icon-spin': isLoading, 'icon-sm': true}" />
+              {{ mode === 'summary' ? 'Generate Summary' : mode === 'sentiment' ? 'Analyze Sentiment' : mode === 'translate' ? 'Translate Text' : 'Create Masterpiece' }}
+            </button>
         </div>
 
-        <div v-if="mode === 'image-gen' && (generatedImageUrl || isImageLoading || imageError)" class="art-result animate-fade-in">
-          <div class="art-card">
-            <div v-if="isImageLoading" class="art-loader">
-               <Loader2 class="icon-spin" :size="48" />
-               <p>Painting your vision...</p>
-            </div>
-
-            <div v-if="imageError" class="art-error-state">
-               <Sparkles class="icon-large opacity-20" />
-               <p>The image service is slightly slow. Don't worry, your art is ready!</p>
-               <button @click="openImageDirectly" class="btn-primary">
-                 <Image :size="18" /> Click to View Your Art
-               </button>
-               <p class="text-sm opacity-50" style="margin-top: 1rem">Sometimes direct viewing works better for high-res art.</p>
-            </div>
-
-            <img 
-              v-show="!isImageLoading && generatedImageUrl && !imageError" 
-              :src="generatedImageUrl" 
-              class="generated-img" 
-              @load="isImageLoading = false; isLoading = false; imageError = false"
-              @error="handleImageError"
-            />
-            
-            <div v-if="!isImageLoading && generatedImageUrl && !imageError" class="art-actions">
-              <button @click="downloadImage" class="btn-download">
-                <Download :size="18" /> Download High-Res
-              </button>
-              <button @click="openImageDirectly" class="btn-secondary" style="margin-left: 1rem">
-                🔗 View Source
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div v-else-if="result" class="result-box animate-fade-in">
+        <div v-if="(mode === 'summary' || mode === 'sentiment' || mode === 'translate') && result" class="result-box animate-fade-in">
           <div class="result-header">
             <h3>Result</h3>
             <button @click="speak(result)" class="icon-btn-sm" title="Read Aloud">
