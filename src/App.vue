@@ -497,7 +497,7 @@ const handleSubmit = async () => {
         <div class="logo-box">
           <Brain class="icon white" />
         </div>
-        <h1 class="title">Neural Nexus <span class="version-tag">v9.1 - Patient Artist</span></h1>
+        <h1 class="title">Neural Nexus <span class="version-tag">v10.0 - Perfect Fit</span></h1>
       </div>
       
       <div class="header-actions">
@@ -1407,14 +1407,18 @@ button.btn-primary:active {
   border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
 }
 
 .generated-img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  min-height: 400px;
+  object-fit: cover;
   display: block;
-  max-height: 600px;
-  object-fit: contain;
 }
 
 .art-loader {
