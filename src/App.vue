@@ -27,7 +27,7 @@ if (pdfjsLib) {
 }
 
 // Types
-type Mode = 'chat' | 'summary' | 'sentiment' | 'translate' | 'image-gen';
+type Mode = 'chat' | 'summary' | 'sentiment' | 'translate' | 'image-gen' | 'face-ai';
 type Message = { role: 'user' | 'assistant'; content: string };
 
 // State
@@ -65,6 +65,58 @@ const isImageLoading = ref(false);
 const imageError = ref(false);
 const lastGeneratedUrl = ref('');
 const generationStatus = ref('');
+
+// Face AI State
+const faceApi = (window as any).faceapi;
+const faceImageInput = ref<HTMLInputElement | null>(null);
+const faceImageUrl = ref<string | null>(null);
+const faceResults = ref<any[]>([]);
+const isFaceLoading = ref(false);
+const faceModelsLoaded = ref(false);
+
+const loadFaceModels = async () => {
+  if (faceModelsLoaded.value || !faceApi) return;
+  const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+  await Promise.all([
+    faceApi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+    faceApi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    faceApi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+    faceApi.nets.ageGenderNet.loadFromUri(MODEL_URL)
+  ]);
+  faceModelsLoaded.value = true;
+};
+
+const triggerFaceUpload = () => faceImageInput.value?.click();
+
+const handleFaceUpload = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  isFaceLoading.value = true;
+  faceResults.value = [];
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    faceImageUrl.value = e.target?.result as string;
+    await loadFaceModels();
+    
+    const img = new (window as any).Image();
+    img.src = faceImageUrl.value;
+    img.onload = async () => {
+      if (!faceApi) { isFaceLoading.value = false; return; }
+      const detections = await faceApi.detectAllFaces(img, new faceApi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceExpressions()
+        .withAgeAndGender();
+      faceResults.value = detections.map((d: any) => ({
+        age: Math.round(d.age),
+        gender: d.gender,
+        expression: Object.entries(d.expressions).reduce((a: any, b: any) => a[1] > b[1] ? a : b)[0]
+      }));
+      isFaceLoading.value = false;
+    };
+  };
+  reader.readAsDataURL(file);
+};
 
 // Other Modes State
 const textInput = ref('');
@@ -221,8 +273,7 @@ const handleImageGen = async () => {
   const isLogoRequest = /logo|icon|writing|text|font|draw|sketch|signature/i.test(promptText);
   
   if (isLogoRequest) {
-    // specialized prompt for text/logos
-    const basePrompt = encodeURIComponent(`${promptText}, typography design, centered text, minimal vector, black ink on white background`);
+
     
     // Name Extraction
     const nameMatch = promptText.match(/of\s+([a-zA-Z]+)/i) || promptText.match(/name\s+([a-zA-Z]+)/i) || promptText.match(/signature\s+([a-zA-Z]+)/i);
@@ -628,6 +679,17 @@ const handleSubmit = async () => {
         <h3>AI Artist</h3>
         <p>Generate Art from Text</p>
       </button>
+
+      <button 
+        @click="mode = 'face-ai'"
+        :class="['nav-card', { active: mode === 'face-ai' }]"
+      >
+        <div class="nav-icon-box">
+          <Activity :size="24" />
+        </div>
+        <h3>Face AI</h3>
+        <p>Detect Faces & Emotions</p>
+      </button>
     </div>
 
     <!-- Main Workspace -->
@@ -788,7 +850,40 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <div class="input-section">
+        <!-- Face AI Section -->
+        <div v-if="mode === 'face-ai'" class="face-ai-section">
+          <input type="file" ref="faceImageInput" @change="handleFaceUpload" accept="image/*" hidden />
+          <div class="face-upload-zone" @click="triggerFaceUpload">
+            <div v-if="!faceImageUrl" class="upload-placeholder">
+              <Image :size="48" class="opacity-30" />
+              <p>Click to upload an image with faces</p>
+            </div>
+            <img v-else :src="faceImageUrl" class="face-preview" />
+          </div>
+          
+          <div v-if="isFaceLoading" class="face-loader">
+            <Loader2 :size="32" class="spin" />
+            <p>Detecting faces...</p>
+          </div>
+          
+          <div v-if="faceResults.length > 0" class="face-results">
+            <h3>🎭 Detected {{ faceResults.length }} Face(s)</h3>
+            <div class="face-cards">
+              <div v-for="(face, i) in faceResults" :key="i" class="face-card">
+                <p><strong>Face {{ i + 1 }}</strong></p>
+                <p>🎂 Age: ~{{ face.age }} years</p>
+                <p>👤 Gender: {{ face.gender }}</p>
+                <p>😊 Expression: {{ face.expression }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="faceImageUrl && !isFaceLoading && faceResults.length === 0" class="no-faces">
+            <p>No faces detected. Try another image.</p>
+          </div>
+        </div>
+
+        <div class="input-section" v-if="mode !== 'face-ai'">
           <label>Input Text</label>
           <textarea 
             v-model="textInput"
@@ -1520,4 +1615,32 @@ button.btn-primary:active {
 .btn-download:active {
   transform: translateY(0);
 }
+
+/* Face AI Styles */
+.face-ai-section { text-align: center; }
+.face-upload-zone {
+  border: 2px dashed rgba(255,255,255,0.2);
+  border-radius: 1rem;
+  padding: 3rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 1.5rem;
+}
+.face-upload-zone:hover { border-color: #6366f1; background: rgba(99,102,241,0.1); }
+.upload-placeholder { opacity: 0.5; }
+.upload-placeholder p { margin-top: 1rem; }
+.face-preview { max-width: 100%; max-height: 400px; border-radius: 0.5rem; }
+.face-loader { display: flex; flex-direction: column; align-items: center; gap: 1rem; color: #818cf8; }
+.face-results { margin-top: 1.5rem; }
+.face-results h3 { margin-bottom: 1rem; color: #a5b4fc; }
+.face-cards { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+.face-card {
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  text-align: left;
+}
+.face-card p { margin: 0.25rem 0; }
+.no-faces { color: #9ca3af; margin-top: 1rem; }
 </style>
